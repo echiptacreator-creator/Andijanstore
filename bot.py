@@ -220,18 +220,18 @@ async def get_quantity(
     
     try:
         title_font = ImageFont.truetype(
-            "arial.ttf",
-            100
+            "arialbd.ttf",
+            24
         )
-    
+        
         price_font = ImageFont.truetype(
-            "arial.ttf",
-            100
+            "arialbd.ttf",
+            44
         )
-    
+        
         sku_font = ImageFont.truetype(
             "arial.ttf",
-            100
+            14
         )
     
     except:
@@ -252,8 +252,8 @@ async def get_quantity(
     
     draw.text(
         (
-            (464 - (bbox[2] - bbox[0])) // 5,
-            10
+            (464 - (bbox[2] - bbox[0])) // 2,
+            8
         ),
         name_text,
         fill="black",
@@ -272,8 +272,8 @@ async def get_quantity(
     
     draw.text(
         (
-            (464 - (bbox[2] - bbox[0])) // 5,
-            50
+            (464 - (bbox[2] - bbox[0])) // 2,
+            40
         ),
         price_text,
         fill="black",
@@ -283,7 +283,7 @@ async def get_quantity(
     
     # Barcode rasmi
     barcode_image = barcode_image.resize(
-        (440, 120)
+        (430, 110)
     )
     
     label.paste(
@@ -301,8 +301,8 @@ async def get_quantity(
     
     draw.text(
         (
-            (464 - (bbox[2] - bbox[0])) // 5,
-            285
+            (464 - (bbox[2] - bbox[0])) // 2,
+            250
         ),
         sku,
         fill="black",
