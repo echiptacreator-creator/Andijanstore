@@ -209,7 +209,7 @@ async def get_quantity(
         barcode_buffer
     ).convert("RGB")
 
-    # 58x40 mm
+    # 58x40 mm (203 dpi)
     label = Image.new(
         "RGB",
         (464, 320),
@@ -221,28 +221,30 @@ async def get_quantity(
     try:
         title_font = ImageFont.truetype(
             "arialbd.ttf",
-            100
+            34
         )
-        
+    
         price_font = ImageFont.truetype(
             "arialbd.ttf",
-            120
+            56
         )
-        
+    
         sku_font = ImageFont.truetype(
             "arial.ttf",
-            40
+            22
         )
     
     except:
-    
         title_font = ImageFont.load_default()
         price_font = ImageFont.load_default()
         sku_font = ImageFont.load_default()
     
     
-    # Mahsulot nomi
-    name_text = data["name"].upper()[:25]
+    # NOM
+    name_text = data["name"].upper()
+    
+    if len(name_text) > 20:
+        name_text = name_text[:20]
     
     bbox = draw.textbbox(
         (0, 0),
@@ -253,7 +255,7 @@ async def get_quantity(
     draw.text(
         (
             (464 - (bbox[2] - bbox[0])) // 2,
-            8
+            10
         ),
         name_text,
         fill="black",
@@ -261,7 +263,7 @@ async def get_quantity(
     )
     
     
-    # Narx
+    # NARX
     price_text = f"{data['sale_price']:,} so'm"
     
     bbox = draw.textbbox(
@@ -273,7 +275,7 @@ async def get_quantity(
     draw.text(
         (
             (464 - (bbox[2] - bbox[0])) // 2,
-            40
+            55
         ),
         price_text,
         fill="black",
@@ -281,18 +283,27 @@ async def get_quantity(
     )
     
     
-    # Barcode rasmi
+    # BARCODE
+    barcode_image = barcode_image.crop(
+        (
+            20,
+            20,
+            barcode_image.width - 20,
+            barcode_image.height - 20
+        )
+    )
+    
     barcode_image = barcode_image.resize(
         (430, 110)
     )
     
     label.paste(
         barcode_image,
-        (12, 140)
+        (17, 135)
     )
     
     
-    # Pastki SKU
+    # SKU
     bbox = draw.textbbox(
         (0, 0),
         sku,
@@ -302,12 +313,13 @@ async def get_quantity(
     draw.text(
         (
             (464 - (bbox[2] - bbox[0])) // 2,
-            250
+            280
         ),
         sku,
         fill="black",
         font=sku_font
     )
+    
     
     final_buffer = BytesIO()
     
