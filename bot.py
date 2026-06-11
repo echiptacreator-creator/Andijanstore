@@ -5,6 +5,10 @@ from aiogram import Bot
 from aiogram import Dispatcher
 from aiogram import F
 
+from PIL import Image
+from PIL import ImageDraw
+from PIL import ImageFont
+
 from aiogram.filters import CommandStart
 
 from aiogram.types import (
@@ -191,23 +195,103 @@ async def get_quantity(
 
         await session.commit()
 
-    code128 = barcode.get(
-        "code128",
-        sku,
-        writer=ImageWriter()
+   code128 = barcode.get(
+    "code128",
+    sku,
+    writer=ImageWriter()
+)
+
+barcode_buffer = BytesIO()
+
+code128.write(barcode_buffer)
+
+barcode_buffer.seek(0)
+
+barcode_image = Image.open(
+    barcode_buffer
+).convert("RGB")
+
+
+label = Image.new(
+    "RGB",
+    (696, 472),
+    "white"
+)
+
+draw = ImageDraw.Draw(label)
+
+try:
+    title_font = ImageFont.truetype(
+        "arial.ttf",
+        36
     )
 
-    buffer = BytesIO()
-
-    code128.write(buffer)
-
-    buffer.seek(0)
-
-    barcode_file = BufferedInputFile(
-        buffer.getvalue(),
-        filename=f"{sku}.png"
+    price_font = ImageFont.truetype(
+        "arial.ttf",
+        44
     )
 
+except:
+
+    title_font = ImageFont.load_default()
+    price_font = ImageFont.load_default()
+
+
+draw.text(
+    (20, 10),
+    "ANDIJON STORE",
+    fill="black",
+    font=title_font
+)
+
+draw.text(
+    (20, 70),
+    data["name"][:25],
+    fill="black",
+    font=title_font
+)
+
+draw.text(
+    (20, 130),
+    f"SKU: {sku}",
+    fill="black",
+    font=title_font
+)
+
+draw.text(
+    (20, 190),
+    f"{data['sale_price']:,} so'm",
+    fill="black",
+    font=price_font
+)
+
+barcode_image = barcode_image.resize(
+    (620, 180)
+)
+
+label.paste(
+    barcode_image,
+    (30, 250)
+)
+
+final_buffer = BytesIO()
+
+label.save(
+    final_buffer,
+    format="PNG"
+)
+
+final_buffer.seek(0)
+
+label_file = BufferedInputFile(
+    final_buffer.getvalue(),
+    filename=f"{sku}.png"
+)
+
+await message.answer_photo(
+    label_file,
+    caption=f"🏷 Etiketka tayyor\nSKU: {sku}"
+)
     await message.answer_photo(
         barcode_file,
         caption=f"""
