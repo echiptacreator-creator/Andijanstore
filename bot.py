@@ -198,13 +198,21 @@ async def get_quantity(
         sku,
         writer=ImageWriter()
     )
-
+    
     barcode_buffer = BytesIO()
-
-    code128.write(barcode_buffer)
-
+    
+    code128.write(
+        barcode_buffer,
+        {
+            "write_text": False,
+            "module_height": 25,
+            "module_width": 0.35,
+            "quiet_zone": 2
+        }
+    )
+    
     barcode_buffer.seek(0)
-
+    
     barcode_image = Image.open(
         barcode_buffer
     ).convert("RGB")
