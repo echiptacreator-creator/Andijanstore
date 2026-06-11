@@ -220,12 +220,12 @@ async def get_quantity(
     try:
         title_font = ImageFont.truetype(
             "arial.ttf",
-            32
+            38
         )
-
+        
         price_font = ImageFont.truetype(
             "arial.ttf",
-            52
+            72
         )
 
     except:
@@ -234,33 +234,33 @@ async def get_quantity(
         price_font = ImageFont.load_default()
 
     draw.text(
-        (20, 20),
-        data["name"][:25],
+        (20, 10),
+        data["name"].upper()[:20],
         fill="black",
         font=title_font
     )
-
+    
     draw.text(
-        (20, 80),
+        (20, 70),
         f"{data['sale_price']:,} so'm",
         fill="black",
         font=price_font
     )
-
+    
     draw.text(
-        (20, 160),
+        (20, 145),
         f"SKU: {sku}",
         fill="black",
         font=title_font
     )
-
+    
     barcode_image = barcode_image.resize(
-        (620, 180)
+        (620, 160)
     )
-
+    
     label.paste(
         barcode_image,
-        (30, 250)
+        (35, 190)
     )
 
     final_buffer = BytesIO()
