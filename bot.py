@@ -195,19 +195,87 @@ async def get_quantity(
         writer=ImageWriter()
     )
 
-    buffer = BytesIO()
+    barcode_buffer = BytesIO()
 
-    code128.write(buffer)
+    code128.write(barcode_buffer)
 
-    buffer.seek(0)
+    barcode_buffer.seek(0)
 
-    barcode_file = BufferedInputFile(
-        buffer.getvalue(),
+    barcode_image = Image.open(
+        barcode_buffer
+    ).convert("RGB")
+
+    # 58x40 mm uchun etiketka
+    label = Image.new(
+        "RGB",
+        (696, 472),
+        "white"
+    )
+
+    draw = ImageDraw.Draw(label)
+
+    try:
+        title_font = ImageFont.truetype(
+            "arial.ttf",
+            32
+        )
+
+        price_font = ImageFont.truetype(
+            "arial.ttf",
+            52
+        )
+
+    except:
+
+        title_font = ImageFont.load_default()
+        price_font = ImageFont.load_default()
+
+    draw.text(
+        (20, 20),
+        data["name"][:25],
+        fill="black",
+        font=title_font
+    )
+
+    draw.text(
+        (20, 80),
+        f"{data['sale_price']:,} so'm",
+        fill="black",
+        font=price_font
+    )
+
+    draw.text(
+        (20, 160),
+        f"SKU: {sku}",
+        fill="black",
+        font=title_font
+    )
+
+    barcode_image = barcode_image.resize(
+        (620, 180)
+    )
+
+    label.paste(
+        barcode_image,
+        (30, 250)
+    )
+
+    final_buffer = BytesIO()
+
+    label.save(
+        final_buffer,
+        format="PNG"
+    )
+
+    final_buffer.seek(0)
+
+    label_file = BufferedInputFile(
+        final_buffer.getvalue(),
         filename=f"{sku}.png"
     )
 
     await message.answer_photo(
-        barcode_file,
+        label_file,
         caption=f"""
 ✅ Mahsulot saqlandi
 
@@ -220,6 +288,8 @@ async def get_quantity(
     )
 
     await state.clear()
+
+
 from models import Base
 from database import engine
 
