@@ -190,25 +190,33 @@ async def get_quantity(
             quantity=data["quantity"]
         )
         session.add(product)
+
         await session.commit()
-        
+
+    code128 = barcode.get(
+        "code128",
+        sku,
+        writer=ImageWriter()
+    )
+
+    barcode_buffer = BytesIO()
+
     code128.write(barcode_buffer)
-    
+
     barcode_buffer.seek(0)
-    
+
     barcode_image = Image.open(
         barcode_buffer
     ).convert("RGB")
-    
-    # 58x40 mm (203 dpi ≈ 464x320)
+
+    # 58x40 mm
     label = Image.new(
         "RGB",
         (464, 320),
         "white"
     )
-    
-    draw = ImageDraw.Draw(label)
-    
+
+    draw = ImageDraw.Draw(label)    
     try:
         title_font = ImageFont.truetype(
             "arial.ttf",
