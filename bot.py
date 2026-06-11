@@ -17,6 +17,9 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.storage.memory import MemoryStorage
 
 from states import ProductCreate
+from database import AsyncSessionLocal
+from models import Product
+from sqlalchemy import select
 
 
 TOKEN = os.getenv("BOT_TOKEN")
@@ -159,9 +162,36 @@ async def get_quantity(
 
     data = await state.get_data()
 
+    async with AsyncSessionLocal() as session:
+
+        result = await session.execute(
+            select(Product)
+        )
+
+        count = len(
+            result.scalars().all()
+        )
+
+        sku = f"AFK{count + 1:06d}"
+
+        product = Product(
+            sku=sku,
+            name=data["name"],
+            image_file_id=data["image_file_id"],
+            purchase_price=data["purchase_price"],
+            sale_price=data["sale_price"],
+            quantity=data["quantity"]
+        )
+
+        session.add(product)
+
+        await session.commit()
+
     await message.answer(
         f"""
-✅ Mahsulot qabul qilindi
+✅ Mahsulot saqlandi
+
+SKU: {sku}
 
 📦 {data['name']}
 
