@@ -252,7 +252,7 @@ async def get_quantity(
     
     draw.text(
         (
-            (464 - (bbox[2] - bbox[0])) // 2,
+            (464 - (bbox[2] - bbox[0])) // 5,
             10
         ),
         name_text,
@@ -272,7 +272,7 @@ async def get_quantity(
     
     draw.text(
         (
-            (464 - (bbox[2] - bbox[0])) // 2,
+            (464 - (bbox[2] - bbox[0])) // 5,
             50
         ),
         price_text,
@@ -301,7 +301,7 @@ async def get_quantity(
     
     draw.text(
         (
-            (464 - (bbox[2] - bbox[0])) // 2,
+            (464 - (bbox[2] - bbox[0])) // 5,
             285
         ),
         sku,
