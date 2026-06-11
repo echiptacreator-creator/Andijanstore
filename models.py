@@ -42,7 +42,3 @@ class Product(Base):
     quantity: Mapped[int] = mapped_column(
         Integer
     )
-    sku: Mapped[str] = mapped_column(
-    String(50),
-    unique=True
-)
