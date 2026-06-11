@@ -1,5 +1,8 @@
 import asyncio
 import os
+from PIL import Image
+from PIL import ImageDraw
+from PIL import ImageFont
 
 from aiogram import Bot
 from aiogram import Dispatcher
