@@ -202,96 +202,104 @@ async def get_quantity(
 
     code128.write(barcode_buffer)
 
-    barcode_buffer.seek(0)
+barcode_buffer.seek(0)
 
-    barcode_image = Image.open(
-        barcode_buffer
-    ).convert("RGB")
+barcode_image = Image.open(
+    barcode_buffer
+).convert("RGB")
 
-    # 58x40 mm uchun etiketka
-    label = Image.new(
-        "RGB",
-        (696, 472),
-        "white"
+# 58x40 mm (203 dpi ≈ 464x320)
+label = Image.new(
+    "RGB",
+    (464, 320),
+    "white"
+)
+
+draw = ImageDraw.Draw(label)
+
+try:
+    title_font = ImageFont.truetype(
+        "arial.ttf",
+        22
     )
 
-    draw = ImageDraw.Draw(label)
-
-    try:
-        title_font = ImageFont.truetype(
-            "arial.ttf",
-            38
-        )
-        
-        price_font = ImageFont.truetype(
-            "arial.ttf",
-            72
-        )
-
-    except:
-
-        title_font = ImageFont.load_default()
-        price_font = ImageFont.load_default()
-
-    draw.text(
-        (20, 10),
-        data["name"].upper()[:20],
-        fill="black",
-        font=title_font
-    )
-    
-    draw.text(
-        (20, 70),
-        f"{data['sale_price']:,} so'm",
-        fill="black",
-        font=price_font
-    )
-    
-    draw.text(
-        (20, 145),
-        f"SKU: {sku}",
-        fill="black",
-        font=title_font
-    )
-    
-    barcode_image = barcode_image.resize(
-        (620, 160)
-    )
-    
-    label.paste(
-        barcode_image,
-        (35, 190)
+    price_font = ImageFont.truetype(
+        "arial.ttf",
+        38
     )
 
-    final_buffer = BytesIO()
-
-    label.save(
-        final_buffer,
-        format="PNG"
+    sku_font = ImageFont.truetype(
+        "arial.ttf",
+        16
     )
 
-    final_buffer.seek(0)
+except:
 
-    label_file = BufferedInputFile(
-        final_buffer.getvalue(),
-        filename=f"{sku}.png"
-    )
+    title_font = ImageFont.load_default()
+    price_font = ImageFont.load_default()
+    sku_font = ImageFont.load_default()
 
-    await message.answer_photo(
-        label_file,
-        caption=f"""
+
+# Mahsulot nomi
+draw.text(
+    (10, 8),
+    data["name"].upper()[:25],
+    fill="black",
+    font=title_font
+)
+
+# Narx
+draw.text(
+    (10, 40),
+    f"{data['sale_price']:,} so'm",
+    fill="black",
+    font=price_font
+)
+
+# SKU
+draw.text(
+    (10, 88),
+    sku,
+    fill="black",
+    font=sku_font
+)
+
+# Barcode
+barcode_image = barcode_image.resize(
+    (430, 140)
+)
+
+label.paste(
+    barcode_image,
+    (17, 120)
+)
+
+final_buffer = BytesIO()
+
+label.save(
+    final_buffer,
+    format="PNG"
+)
+
+final_buffer.seek(0)
+
+label_file = BufferedInputFile(
+    final_buffer.getvalue(),
+    filename=f"{sku}.png"
+)
+
+await message.answer_photo(
+    label_file,
+    caption=f"""
 ✅ Mahsulot saqlandi
 
 📦 {data['name']}
 🏷 SKU: {sku}
 
-💰 Sotuv: {data['sale_price']}
+💰 Sotuv: {data['sale_price']:,} so'm
 📊 Miqdor: {data['quantity']}
 """
-    )
-
-    await state.clear()
-
+)
 
 from models import Base
 from database import engine
