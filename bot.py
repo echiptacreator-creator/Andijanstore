@@ -191,115 +191,109 @@ async def get_quantity(
         )
         session.add(product)
         await session.commit()
-
-    code128 = barcode.get(
-        "code128",
-        sku,
-        writer=ImageWriter()
-    )
-
-    barcode_buffer = BytesIO()
-
+        
     code128.write(barcode_buffer)
-
-barcode_buffer.seek(0)
-
-barcode_image = Image.open(
-    barcode_buffer
-).convert("RGB")
-
-# 58x40 mm (203 dpi ≈ 464x320)
-label = Image.new(
-    "RGB",
-    (464, 320),
-    "white"
-)
-
-draw = ImageDraw.Draw(label)
-
-try:
-    title_font = ImageFont.truetype(
-        "arial.ttf",
-        22
+    
+    barcode_buffer.seek(0)
+    
+    barcode_image = Image.open(
+        barcode_buffer
+    ).convert("RGB")
+    
+    # 58x40 mm (203 dpi ≈ 464x320)
+    label = Image.new(
+        "RGB",
+        (464, 320),
+        "white"
+    )
+    
+    draw = ImageDraw.Draw(label)
+    
+    try:
+        title_font = ImageFont.truetype(
+            "arial.ttf",
+            22
+        )
+    
+        price_font = ImageFont.truetype(
+            "arial.ttf",
+            38
+        )
+    
+        sku_font = ImageFont.truetype(
+            "arial.ttf",
+            16
+        )
+    
+    except:
+    
+        title_font = ImageFont.load_default()
+        price_font = ImageFont.load_default()
+        sku_font = ImageFont.load_default()
+    
+    
+    # Mahsulot nomi
+    draw.text(
+        (10, 8),
+        data["name"].upper()[:25],
+        fill="black",
+        font=title_font
+    )
+    
+    # Narx
+    draw.text(
+        (10, 40),
+        f"{data['sale_price']:,} so'm",
+        fill="black",
+        font=price_font
+    )
+    
+    # SKU
+    draw.text(
+        (10, 88),
+        sku,
+        fill="black",
+        font=sku_font
+    )
+    
+    # Barcode
+    barcode_image = barcode_image.resize(
+        (430, 140)
+    )
+    
+    label.paste(
+        barcode_image,
+        (17, 120)
+    )
+    
+    final_buffer = BytesIO()
+    
+    label.save(
+        final_buffer,
+        format="PNG"
+    )
+    
+    final_buffer.seek(0)
+    
+    label_file = BufferedInputFile(
+        final_buffer.getvalue(),
+        filename=f"{sku}.png"
+    )
+    
+    await message.answer_photo(
+        label_file,
+        caption=f"""
+    ✅ Mahsulot saqlandi
+    
+    📦 {data['name']}
+    🏷 SKU: {sku}
+    
+    💰 Sotuv: {data['sale_price']:,} so'm
+    📊 Miqdor: {data['quantity']}
+    """
     )
 
-    price_font = ImageFont.truetype(
-        "arial.ttf",
-        38
-    )
-
-    sku_font = ImageFont.truetype(
-        "arial.ttf",
-        16
-    )
-
-except:
-
-    title_font = ImageFont.load_default()
-    price_font = ImageFont.load_default()
-    sku_font = ImageFont.load_default()
-
-
-# Mahsulot nomi
-draw.text(
-    (10, 8),
-    data["name"].upper()[:25],
-    fill="black",
-    font=title_font
-)
-
-# Narx
-draw.text(
-    (10, 40),
-    f"{data['sale_price']:,} so'm",
-    fill="black",
-    font=price_font
-)
-
-# SKU
-draw.text(
-    (10, 88),
-    sku,
-    fill="black",
-    font=sku_font
-)
-
-# Barcode
-barcode_image = barcode_image.resize(
-    (430, 140)
-)
-
-label.paste(
-    barcode_image,
-    (17, 120)
-)
-
-final_buffer = BytesIO()
-
-label.save(
-    final_buffer,
-    format="PNG"
-)
-
-final_buffer.seek(0)
-
-label_file = BufferedInputFile(
-    final_buffer.getvalue(),
-    filename=f"{sku}.png"
-)
-
-await message.answer_photo(
-    label_file,
-    caption=f"""
-✅ Mahsulot saqlandi
-
-📦 {data['name']}
-🏷 SKU: {sku}
-
-💰 Sotuv: {data['sale_price']:,} so'm
-📊 Miqdor: {data['quantity']}
-"""
-)
+    await state.clear()
 
 from models import Base
 from database import engine
