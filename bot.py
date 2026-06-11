@@ -228,17 +228,17 @@ async def get_quantity(
     
     try:
         title_font = ImageFont.truetype(
-            "arialbd.ttf",
+            "Nekst-Bold.ttf",
             34
         )
     
         price_font = ImageFont.truetype(
-            "arialbd.ttf",
+            "Nekst-Bold.ttf",
             56
         )
     
         sku_font = ImageFont.truetype(
-            "arial.ttf",
+            "Nekst-Bold.ttf",
             22
         )
     
