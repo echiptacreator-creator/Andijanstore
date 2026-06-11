@@ -215,22 +215,23 @@ async def get_quantity(
         (464, 320),
         "white"
     )
-
-    draw = ImageDraw.Draw(label)    
+    
+    draw = ImageDraw.Draw(label)
+    
     try:
         title_font = ImageFont.truetype(
             "arial.ttf",
-            22
+            30
         )
     
         price_font = ImageFont.truetype(
             "arial.ttf",
-            38
+            58
         )
     
         sku_font = ImageFont.truetype(
             "arial.ttf",
-            16
+            18
         )
     
     except:
@@ -241,37 +242,71 @@ async def get_quantity(
     
     
     # Mahsulot nomi
+    name_text = data["name"].upper()[:25]
+    
+    bbox = draw.textbbox(
+        (0, 0),
+        name_text,
+        font=title_font
+    )
+    
     draw.text(
-        (10, 8),
-        data["name"].upper()[:25],
+        (
+            (464 - (bbox[2] - bbox[0])) // 2,
+            10
+        ),
+        name_text,
         fill="black",
         font=title_font
     )
     
+    
     # Narx
+    price_text = f"{data['sale_price']:,} so'm"
+    
+    bbox = draw.textbbox(
+        (0, 0),
+        price_text,
+        font=price_font
+    )
+    
     draw.text(
-        (10, 40),
-        f"{data['sale_price']:,} so'm",
+        (
+            (464 - (bbox[2] - bbox[0])) // 2,
+            50
+        ),
+        price_text,
         fill="black",
         font=price_font
     )
     
-    # SKU
-    draw.text(
-        (10, 88),
-        sku,
-        fill="black",
-        font=sku_font
-    )
     
-    # Barcode
+    # Barcode rasmi
     barcode_image = barcode_image.resize(
-        (430, 140)
+        (440, 120)
     )
     
     label.paste(
         barcode_image,
-        (17, 120)
+        (12, 140)
+    )
+    
+    
+    # Pastki SKU
+    bbox = draw.textbbox(
+        (0, 0),
+        sku,
+        font=sku_font
+    )
+    
+    draw.text(
+        (
+            (464 - (bbox[2] - bbox[0])) // 2,
+            285
+        ),
+        sku,
+        fill="black",
+        font=sku_font
     )
     
     final_buffer = BytesIO()
@@ -300,8 +335,6 @@ async def get_quantity(
     📊 Miqdor: {data['quantity']}
     """
     )
-
-    await state.clear()
 
 from models import Base
 from database import engine
