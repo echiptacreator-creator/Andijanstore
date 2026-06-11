@@ -20,7 +20,11 @@ from states import ProductCreate
 from database import AsyncSessionLocal
 from models import Product
 from sqlalchemy import select
+import barcode
+from barcode.writer import ImageWriter
 
+from io import BytesIO
+from aiogram.types import BufferedInputFile
 
 TOKEN = os.getenv("BOT_TOKEN")
 
@@ -187,16 +191,32 @@ async def get_quantity(
 
         await session.commit()
 
-    await message.answer(
-        f"""
+    code128 = barcode.get(
+        "code128",
+        sku,
+        writer=ImageWriter()
+    )
+
+    buffer = BytesIO()
+
+    code128.write(buffer)
+
+    buffer.seek(0)
+
+    barcode_file = BufferedInputFile(
+        buffer.getvalue(),
+        filename=f"{sku}.png"
+    )
+
+    await message.answer_photo(
+        barcode_file,
+        caption=f"""
 ✅ Mahsulot saqlandi
 
-SKU: {sku}
-
 📦 {data['name']}
+🏷 SKU: {sku}
 
-💰 Kelish: {data['purchase_price']}
-🏷 Sotuv: {data['sale_price']}
+💰 Sotuv: {data['sale_price']}
 📊 Miqdor: {data['quantity']}
 """
     )
