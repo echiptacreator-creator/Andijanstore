@@ -215,6 +215,8 @@ async def create_tables():
 
 async def main():
 
+    await create_tables()
+
     await dp.start_polling(bot)
 
 
