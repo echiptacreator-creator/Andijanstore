@@ -5,10 +5,6 @@ from aiogram import Bot
 from aiogram import Dispatcher
 from aiogram import F
 
-from PIL import Image
-from PIL import ImageDraw
-from PIL import ImageFont
-
 from aiogram.filters import CommandStart
 
 from aiogram.types import (
@@ -190,9 +186,7 @@ async def get_quantity(
             sale_price=data["sale_price"],
             quantity=data["quantity"]
         )
-
         session.add(product)
-
         await session.commit()
 
     code128 = barcode.get(
@@ -201,14 +195,14 @@ async def get_quantity(
         writer=ImageWriter()
     )
 
-    barcode_buffer = BytesIO()
+    buffer = BytesIO()
 
-    code128.write(barcode_buffer)
+    code128.write(buffer)
 
-    barcode_buffer.seek(0)
+    buffer.seek(0)
 
     barcode_file = BufferedInputFile(
-        barcode_buffer.getvalue(),
+        buffer.getvalue(),
         filename=f"{sku}.png"
     )
 
@@ -226,7 +220,6 @@ async def get_quantity(
     )
 
     await state.clear()
-
 from models import Base
 from database import engine
 
