@@ -221,17 +221,17 @@ async def get_quantity(
     try:
         title_font = ImageFont.truetype(
             "arialbd.ttf",
-            24
+            100
         )
         
         price_font = ImageFont.truetype(
             "arialbd.ttf",
-            44
+            120
         )
         
         sku_font = ImageFont.truetype(
             "arial.ttf",
-            14
+            40
         )
     
     except:
