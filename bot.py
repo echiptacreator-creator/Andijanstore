@@ -159,13 +159,57 @@ async def get_sale(
     )
 
     await state.set_state(
-        ProductCreate.quantity
+        ProductCreate.sizes
     )
 
     await message.answer(
         "Miqdori?"
     )
 
+
+@dp.message(ProductCreate.sizes)
+async def get_sizes(
+    message: Message,
+    state: FSMContext
+):
+
+    await state.update_data(
+        sizes=message.text
+    )
+
+    total = 0
+
+    try:
+
+        parts = message.text.split(",")
+
+        for part in parts:
+
+            qty = int(
+                part.split(":")[1]
+            )
+
+            total += qty
+
+    except:
+
+        await message.answer(
+            "Misol: S:5,M:8,L:4,XL:3"
+        )
+
+        return
+
+    await state.update_data(
+        quantity=total
+    )
+
+    await state.set_state(
+        ProductCreate.quantity
+    )
+
+    await message.answer(
+        f"Jami miqdor: {total}\nTasdiqlash uchun istalgan son yuboring"
+    )
 
 @dp.message(ProductCreate.quantity)
 async def get_quantity(
