@@ -72,6 +72,8 @@ async def create_product(
     state: FSMContext
 ):
 
+    await state.clear()
+
     await state.set_state(
         ProductCreate.image
     )
@@ -170,6 +172,14 @@ async def get_quantity(
     message: Message,
     state: FSMContext
 ):
+
+    if not message.text.isdigit():
+
+        await message.answer(
+            "❌ Miqdor faqat raqam bo'lishi kerak"
+        )
+
+        return
 
     await state.update_data(
         quantity=int(message.text)
@@ -379,6 +389,9 @@ async def price_label(
     message: Message,
     state: FSMContext
 ):
+
+    await state.clear()
+
     async with AsyncSessionLocal() as session:
 
         result = await session.execute(
