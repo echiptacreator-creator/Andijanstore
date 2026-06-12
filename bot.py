@@ -427,6 +427,7 @@ async def select_product(
     message: Message,
     state: FSMContext
 ):
+
     async with AsyncSessionLocal() as session:
 
         result = await session.execute(
@@ -442,7 +443,24 @@ async def select_product(
         await message.answer(
             "Mahsulot topilmadi"
         )
+
         return
+
+    await state.clear()
+
+    await message.answer_photo(
+        product.image_file_id,
+        caption=f"""
+📦 {product.name}
+
+🏷 SKU: {product.sku}
+
+💰 Narx: {product.sale_price:,} so'm
+
+📊 Omborda: {product.quantity} dona
+"""
+    )
+
 
     # shu yerda sen ishlatayotgan
     # barcode + etiketka kodi ishlaydi
