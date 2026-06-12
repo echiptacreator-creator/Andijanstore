@@ -307,7 +307,13 @@ async def save_product(
             image_file_id=data["image_file_id"],
             purchase_price=data["purchase_price"],
             sale_price=data["sale_price"],
-            quantity=total
+        
+            quantity=total,
+        
+            size_s=data["s"],
+            size_m=data["m"],
+            size_l=data["l"],
+            size_xl=data["xl"]
         )
 
         session.add(product)
