@@ -43,4 +43,9 @@ class Product(Base):
         Integer
     )
 
+    sizes: Mapped[str] = mapped_column(
+        String(500),
+        nullable=True
+    )
+
 
