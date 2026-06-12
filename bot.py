@@ -375,23 +375,6 @@ async def get_quantity(
     )
 
     
-    label_file_id = sent_message.photo[-1].file_id
-    
-    async with AsyncSessionLocal() as session:
-    
-        result = await session.execute(
-            select(Product).where(
-                Product.sku == sku
-            )
-        )
-    
-        product = result.scalar_one()
-    
-        product.label_file_id = label_file_id
-    
-        await session.commit()
-
-
 from models import Base
 from database import engine
 
@@ -461,23 +444,155 @@ async def select_product(
         await message.answer(
             "Mahsulot topilmadi"
         )
-
         return
 
-    await state.clear()
+    sku = product.sku
+
+    code128 = barcode.get(
+        "code128",
+        sku,
+        writer=ImageWriter()
+    )
+
+    barcode_buffer = BytesIO()
+
+    code128.write(
+        barcode_buffer,
+        {
+            "write_text": False,
+            "module_height": 25,
+            "module_width": 0.35,
+            "quiet_zone": 2
+        }
+    )
+
+    barcode_buffer.seek(0)
+
+    barcode_image = Image.open(
+        barcode_buffer
+    ).convert("RGB")
+
+    label = Image.new(
+        "RGB",
+        (464, 320),
+        "white"
+    )
+
+    draw = ImageDraw.Draw(label)
+
+    try:
+
+        title_font = ImageFont.truetype(
+            "Nekst-Bold.ttf",
+            34
+        )
+
+        price_font = ImageFont.truetype(
+            "Nekst-Bold.ttf",
+            56
+        )
+
+        sku_font = ImageFont.truetype(
+            "Nekst-Bold.ttf",
+            22
+        )
+
+    except:
+
+        title_font = ImageFont.load_default()
+        price_font = ImageFont.load_default()
+        sku_font = ImageFont.load_default()
+
+    name_text = product.name.upper()
+
+    bbox = draw.textbbox(
+        (0, 0),
+        name_text,
+        font=title_font
+    )
+
+    draw.text(
+        (
+            (464 - (bbox[2] - bbox[0])) // 2,
+            10
+        ),
+        name_text,
+        fill="black",
+        font=title_font
+    )
+
+    price_text = f"{product.sale_price:,} so'm"
+
+    bbox = draw.textbbox(
+        (0, 0),
+        price_text,
+        font=price_font
+    )
+
+    draw.text(
+        (
+            (464 - (bbox[2] - bbox[0])) // 2,
+            55
+        ),
+        price_text,
+        fill="black",
+        font=price_font
+    )
+
+    barcode_image = barcode_image.crop(
+        (
+            20,
+            20,
+            barcode_image.width - 20,
+            barcode_image.height - 20
+        )
+    )
+
+    barcode_image = barcode_image.resize(
+        (430, 110)
+    )
+
+    label.paste(
+        barcode_image,
+        (17, 135)
+    )
+
+    bbox = draw.textbbox(
+        (0, 0),
+        sku,
+        font=sku_font
+    )
+
+    draw.text(
+        (
+            (464 - (bbox[2] - bbox[0])) // 2,
+            280
+        ),
+        sku,
+        fill="black",
+        font=sku_font
+    )
+
+    final_buffer = BytesIO()
+
+    label.save(
+        final_buffer,
+        format="PNG"
+    )
+
+    final_buffer.seek(0)
+
+    label_file = BufferedInputFile(
+        final_buffer.getvalue(),
+        filename=f"{sku}.png"
+    )
 
     await message.answer_photo(
-        product.label_file_id,
-        caption=f"""
-    📦 {product.name}
-    
-    🏷 SKU: {product.sku}
-    
-    💰 Narx: {product.sale_price:,} so'm
-    
-    📊 Omborda: {product.quantity} dona
-    """
+        label_file,
+        caption=f"{product.name}"
     )
+
+    await state.clear()
 
 
     # shu yerda sen ishlatayotgan
