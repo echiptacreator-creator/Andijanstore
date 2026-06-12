@@ -43,6 +43,11 @@ menu = ReplyKeyboardMarkup(
             KeyboardButton(
                 text="➕ Mahsulot qo'shish"
             )
+        ],
+        [
+            KeyboardButton(
+                text="🧾 Narx chek chiqarish"
+            )
         ]
     ],
     resize_keyboard=True
@@ -365,6 +370,66 @@ async def create_tables():
             Base.metadata.create_all
         )
 
+
+@dp.message(F.text == "🧾 Narx chek chiqarish")
+async def price_label(
+    message: Message,
+    state: FSMContext
+):
+    async with AsyncSessionLocal() as session:
+
+        result = await session.execute(
+            select(Product)
+        )
+
+        products = result.scalars().all()
+
+    buttons = []
+
+    for product in products:
+
+        buttons.append(
+            [KeyboardButton(text=product.name)]
+        )
+
+    kb = ReplyKeyboardMarkup(
+        keyboard=buttons,
+        resize_keyboard=True
+    )
+
+    await state.set_state(
+        ProductSearch.select_product
+    )
+
+    await message.answer(
+        "Mahsulot tanlang",
+        reply_markup=kb
+    )
+
+@dp.message(ProductSearch.select_product)
+async def select_product(
+    message: Message,
+    state: FSMContext
+):
+    async with AsyncSessionLocal() as session:
+
+        result = await session.execute(
+            select(Product).where(
+                Product.name == message.text
+            )
+        )
+
+        product = result.scalar_one_or_none()
+
+    if not product:
+
+        await message.answer(
+            "Mahsulot topilmadi"
+        )
+        return
+
+    # shu yerda sen ishlatayotgan
+    # barcode + etiketka kodi ishlaydi
 
 async def main():
 
