@@ -43,7 +43,4 @@ class Product(Base):
         Integer
     )
 
-    label_file_id: Mapped[str | None] = mapped_column(
-        String(255),
-        nullable=True
-    )
+
