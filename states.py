@@ -13,3 +13,7 @@ class ProductCreate(StatesGroup):
     sale_price = State()
 
     quantity = State()
+    
+class ProductSearch(StatesGroup):
+
+    select_product = State()
