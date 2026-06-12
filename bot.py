@@ -160,54 +160,134 @@ async def get_sale(
     )
 
     await state.set_state(
-        ProductCreate.sizes
+        ProductCreate.size_s
+    )
+    
+    await message.answer(
+        "📏 S razmer nechta?"
+    )
+
+
+@dp.message(ProductCreate.size_s)
+async def get_s(message: Message, state: FSMContext):
+
+    await state.update_data(
+        s=int(message.text)
+    )
+
+    await state.set_state(
+        ProductCreate.size_m
     )
 
     await message.answer(
-        """
-📏 Razmerlarni kiriting
-
-Misol:
-
-S:5,M:8,L:4,XL:3
-"""
+        "📏 M razmer nechta?"
     )
 
 
-@dp.message(ProductCreate.sizes)
-async def get_sizes(
+@dp.message(ProductCreate.size_m)
+async def get_m(message: Message, state: FSMContext):
+
+    await state.update_data(
+        m=int(message.text)
+    )
+
+    await state.set_state(
+        ProductCreate.size_l
+    )
+
+    await message.answer(
+        "📏 L razmer nechta?"
+    )
+
+
+@dp.message(ProductCreate.size_l)
+async def get_l(message: Message, state: FSMContext):
+
+    await state.update_data(
+        l=int(message.text)
+    )
+
+    await state.set_state(
+        ProductCreate.size_xl
+    )
+
+    await message.answer(
+        "📏 XL razmer nechta?"
+    )
+
+@dp.message(ProductCreate.size_xl)
+async def get_xl(message: Message, state: FSMContext):
+
+    await state.update_data(
+        xl=int(message.text)
+    )
+
+    data = await state.get_data()
+
+    total = (
+        data["s"] +
+        data["m"] +
+        data["l"] +
+        data["xl"]
+    )
+
+    await state.update_data(
+        quantity=total
+    )
+
+    kb = ReplyKeyboardMarkup(
+        keyboard=[
+            [
+                KeyboardButton(
+                    text="✅ Tasdiqlash"
+                )
+            ],
+            [
+                KeyboardButton(
+                    text="❌ Bekor qilish"
+                )
+            ]
+        ],
+        resize_keyboard=True
+    )
+
+    await state.set_state(
+        ProductCreate.confirm
+    )
+
+    await message.answer(
+        f"""
+📦 {data['name']}
+
+S: {data['s']}
+M: {data['m']}
+L: {data['l']}
+XL: {data['xl']}
+
+📊 Jami: {total} dona
+
+Tasdiqlaysizmi?
+""",
+        reply_markup=kb
+    )
+
+@dp.message(
+    ProductCreate.confirm,
+    F.text == "✅ Tasdiqlash"
+)
+async def save_product(
     message: Message,
     state: FSMContext
 ):
 
-    total = 0
-
-    try:
-
-        parts = message.text.split(",")
-
-        for part in parts:
-
-            qty = int(
-                part.split(":")[1]
-            )
-
-            total += qty
-
-    except:
-
-        await message.answer(
-            "Misol: S:5,M:8,L:4,XL:3"
-        )
-
-        return
-
-    await state.update_data(
-        sizes=message.text,
-        quantity=total
-    )
-
     data = await state.get_data()
+
+    total = (
+        data["s"] +
+        data["m"] +
+        data["l"] +
+        data["xl"]
+    )
 
     async with AsyncSessionLocal() as session:
 
@@ -234,27 +314,6 @@ async def get_sizes(
 
         await session.commit()
 
-    # SHU YERDAN PASTGA
-    # barcode yaratish kodi boshlanadi
-@dp.message(ProductCreate.quantity)
-async def get_quantity(
-    message: Message,
-    state: FSMContext
-):
-
-    if not message.text.isdigit():
-
-        await message.answer(
-            "❌ Miqdor faqat raqam bo'lishi kerak"
-        )
-
-        return
-
-    await state.update_data(
-        quantity=int(message.text)
-    )
-
-      
     code128 = barcode.get(
         "code128",
         sku,
