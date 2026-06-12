@@ -762,7 +762,10 @@ async def select_product(
     )
 
 
-@dp.message(F.text == "❌ Bekor qilish")
+@dp.message(
+    ProductSearch.select_product,
+    F.text == "❌ Bekor qilish"
+)
 async def cancel(
     message: Message,
     state: FSMContext
@@ -778,7 +781,10 @@ async def cancel(
 
 
 
-@dp.message(F.text == "➡️ Keyingi")
+@dp.message(
+    ProductSearch.select_product,
+    F.text == "➡️ Keyingi"
+)
 async def next_page(
     message: Message,
     state: FSMContext
@@ -808,7 +814,10 @@ async def next_page(
         page
     )
 
-@dp.message(F.text == "⬅️ Oldingi")
+@dp.message(
+    ProductSearch.select_product,
+    F.text == "⬅️ Oldingi"
+)
 async def prev_page(
     message: Message,
     state: FSMContext
