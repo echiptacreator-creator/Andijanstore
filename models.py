@@ -68,3 +68,12 @@ class Product(Base):
         default=0
     )
 
+    size_xxl: Mapped[int] = mapped_column(
+        Integer,
+        default=0
+    )
+    
+    size_xxxl: Mapped[int] = mapped_column(
+        Integer,
+        default=0
+    )
