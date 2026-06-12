@@ -1,5 +1,7 @@
 import asyncio
 
+from sqlalchemy import text
+
 from database import engine
 from models import Base
 
@@ -8,25 +10,13 @@ async def create():
 
     async with engine.begin() as conn:
 
-        await conn.run_sync(
-            Base.metadata.create_all
-        )
-
-
-asyncio.run(create())
-
-
-
-
-from sqlalchemy import text
-
-async def create_tables():
-
-    async with engine.begin() as conn:
+        print("Creating tables...")
 
         await conn.run_sync(
             Base.metadata.create_all
         )
+
+        print("Adding size columns...")
 
         await conn.execute(text("""
             ALTER TABLE products
@@ -47,3 +37,10 @@ async def create_tables():
             ALTER TABLE products
             ADD COLUMN IF NOT EXISTS size_xl INTEGER DEFAULT 0
         """))
+
+        print("Done!")
+
+
+if __name__ == "__main__":
+    asyncio.run(create())
+    
