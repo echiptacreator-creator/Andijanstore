@@ -490,6 +490,10 @@ async def show_products(
         ]
     )
 )
+async def select_product(
+    message: Message,
+    state: FSMContext
+):
 
     async with AsyncSessionLocal() as session:
 
