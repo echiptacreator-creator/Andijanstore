@@ -28,7 +28,10 @@ from states import (
     ProductSearch
 )
 from database import AsyncSessionLocal
-from models import Product
+from models import (
+    Product,
+    Base
+)
 from sqlalchemy import select
 import barcode
 from barcode.writer import ImageWriter
