@@ -210,7 +210,7 @@ async def get_quantity(
         session.add(product)
 
         await session.commit()
-
+    
     code128 = barcode.get(
         "code128",
         sku,
@@ -361,7 +361,7 @@ async def get_quantity(
         filename=f"{sku}.png"
     )
     
-    await message.answer_photo(
+    sent_message = await message.answer_photo(
         label_file,
         caption=f"""
     ✅ Mahsulot saqlandi
@@ -373,6 +373,24 @@ async def get_quantity(
     📊 Miqdor: {data['quantity']}
     """
     )
+
+    
+    label_file_id = sent_message.photo[-1].file_id
+    
+    async with AsyncSessionLocal() as session:
+    
+        result = await session.execute(
+            select(Product).where(
+                Product.sku == sku
+            )
+        )
+    
+        product = result.scalar_one()
+    
+        product.label_file_id = label_file_id
+    
+        await session.commit()
+
 
 from models import Base
 from database import engine
@@ -449,16 +467,16 @@ async def select_product(
     await state.clear()
 
     await message.answer_photo(
-        product.image_file_id,
+        product.label_file_id,
         caption=f"""
-📦 {product.name}
-
-🏷 SKU: {product.sku}
-
-💰 Narx: {product.sale_price:,} so'm
-
-📊 Omborda: {product.quantity} dona
-"""
+    📦 {product.name}
+    
+    🏷 SKU: {product.sku}
+    
+    💰 Narx: {product.sale_price:,} so'm
+    
+    📊 Omborda: {product.quantity} dona
+    """
     )
 
 
