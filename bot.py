@@ -521,15 +521,37 @@ async def save_product(
         "🏠 Bosh menyu",
         reply_markup=menu
     )
-    
-from models import Base
-from database import engine
+
+
+from sqlalchemy import text
 
 async def create_tables():
+
     async with engine.begin() as conn:
+
         await conn.run_sync(
             Base.metadata.create_all
         )
+
+        await conn.execute(text("""
+            ALTER TABLE products
+            ADD COLUMN IF NOT EXISTS size_xxl INTEGER DEFAULT 0
+        """))
+
+        await conn.execute(text("""
+            ALTER TABLE products
+            ADD COLUMN IF NOT EXISTS size_xxxl INTEGER DEFAULT 0
+        """))
+
+
+#from models import Base
+#from database import engine
+
+#async def create_tables():
+ #   async with engine.begin() as conn:
+  #      await conn.run_sync(
+   #         Base.metadata.create_all
+    #    )
 
 
 @dp.message(F.text == "🧾 Narx chek chiqarish")
