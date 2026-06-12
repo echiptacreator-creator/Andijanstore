@@ -482,7 +482,13 @@ async def save_product(
     📊 Miqdor: {data['quantity']}
     """
     )
-
+    
+    await state.clear()
+    
+    await message.answer(
+        "🏠 Bosh menyu",
+        reply_markup=menu
+    )
     
 from models import Base
 from database import engine
