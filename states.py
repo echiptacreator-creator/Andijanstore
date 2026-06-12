@@ -11,7 +11,9 @@ class ProductCreate(StatesGroup):
     size_m = State()
     size_l = State()
     size_xl = State()
-
+    size_xxl = State()
+    size_xxxl = State()
+    
     confirm = State()
 
 
