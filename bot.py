@@ -309,6 +309,10 @@ Tasdiqlaysizmi?
         reply_markup=kb
     )
     
+@dp.message(
+    ProductCreate.confirm,
+    F.text == "✅ Tasdiqlash"
+)
 async def save_product(
     message: Message,
     state: FSMContext
