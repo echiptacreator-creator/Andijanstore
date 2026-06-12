@@ -1,6 +1,10 @@
 from aiogram.fsm.state import State
 from aiogram.fsm.state import StatesGroup
 
+from aiogram.fsm.state import (
+    StatesGroup,
+    State
+)
 
 class ProductCreate(StatesGroup):
     image = State()
@@ -14,6 +18,10 @@ class ProductCreate(StatesGroup):
     size_xl = State()
 
     confirm = State()
+
+
+class ProductSearch(StatesGroup):
+    select_product = State()
     
 from aiogram.fsm.state import State
 from aiogram.fsm.state import StatesGroup
