@@ -164,7 +164,13 @@ async def get_sale(
     )
 
     await message.answer(
-        "Miqdori?"
+        """
+📏 Razmerlarni kiriting
+
+Misol:
+
+S:5,M:8,L:4,XL:3
+"""
     )
 
 
