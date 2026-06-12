@@ -248,7 +248,7 @@ async def get_xxl(
         "📏 XXXL razmer nechta?"
     )
 
-    @dp.message(ProductCreate.size_xxxl)
+@dp.message(ProductCreate.size_xxxl)
 async def get_xxxl(
     message: Message,
     state: FSMContext
