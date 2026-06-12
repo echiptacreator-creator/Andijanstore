@@ -30,3 +30,11 @@ class ProductCreate(StatesGroup):
 class ProductSearch(StatesGroup):
 
     select_product = State()
+
+
+from aiogram.fsm.state import State
+from aiogram.fsm.state import StatesGroup
+
+class ProductSearch(StatesGroup):
+    select_product = State()
+    page = State()
