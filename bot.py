@@ -180,10 +180,6 @@ async def get_sizes(
     state: FSMContext
 ):
 
-    await state.update_data(
-        sizes=message.text
-    )
-
     total = 0
 
     try:
@@ -207,33 +203,8 @@ async def get_sizes(
         return
 
     await state.update_data(
+        sizes=message.text,
         quantity=total
-    )
-
-    await state.set_state(
-        ProductCreate.quantity
-    )
-
-    await message.answer(
-        f"Jami miqdor: {total}\nTasdiqlash uchun istalgan son yuboring"
-    )
-
-@dp.message(ProductCreate.quantity)
-async def get_quantity(
-    message: Message,
-    state: FSMContext
-):
-
-    if not message.text.isdigit():
-
-        await message.answer(
-            "❌ Miqdor faqat raqam bo'lishi kerak"
-        )
-
-        return
-
-    await state.update_data(
-        quantity=int(message.text)
     )
 
     data = await state.get_data()
@@ -256,12 +227,34 @@ async def get_quantity(
             image_file_id=data["image_file_id"],
             purchase_price=data["purchase_price"],
             sale_price=data["sale_price"],
-            quantity=data["quantity"]
+            quantity=total
         )
+
         session.add(product)
 
         await session.commit()
-    
+
+    # SHU YERDAN PASTGA
+    # barcode yaratish kodi boshlanadi
+@dp.message(ProductCreate.quantity)
+async def get_quantity(
+    message: Message,
+    state: FSMContext
+):
+
+    if not message.text.isdigit():
+
+        await message.answer(
+            "❌ Miqdor faqat raqam bo'lishi kerak"
+        )
+
+        return
+
+    await state.update_data(
+        quantity=int(message.text)
+    )
+
+      
     code128 = barcode.get(
         "code128",
         sku,
