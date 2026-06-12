@@ -401,26 +401,22 @@ async def price_label(
 
         products = result.scalars().all()
 
-    buttons = []
-
-    for product in products:
-
-        buttons.append(
-            [KeyboardButton(text=product.name)]
-        )
-
-    kb = ReplyKeyboardMarkup(
-        keyboard=buttons,
-        resize_keyboard=True
-    )
-
     await state.set_state(
         ProductSearch.select_product
     )
-
-    await message.answer(
-        "Mahsulot tanlang",
-        reply_markup=kb
+    
+    await state.update_data(
+        products=[p.name for p in products],
+        page=0
+    )
+    
+    await show_products(
+        message,
+        products,
+        0
+    )
+    await state.update_data(
+        page=0
     )
 
 @dp.message(ProductSearch.select_product)
@@ -595,8 +591,144 @@ async def select_product(
     await state.clear()
 
 
+async def show_products(
+    message: Message,
+    products,
+    page
+):
+
+    per_page = 10
+
+    start = page * per_page
+    end = start + per_page
+
+    current = products[start:end]
+
+    buttons = []
+
+    for product in current:
+
+        buttons.append(
+            [KeyboardButton(text=product.name)]
+        )
+
+    nav = []
+
+    if page > 0:
+        nav.append(
+            KeyboardButton(text="⬅️ Oldingi")
+        )
+
+    if end < len(products):
+        nav.append(
+            KeyboardButton(text="➡️ Keyingi")
+        )
+    
+    if nav:
+        buttons.append(nav)
+
+        buttons.append(
+                [
+                    KeyboardButton(
+                        text="❌ Bekor qilish"
+                    )
+                ]
+            )
+    
+    kb = ReplyKeyboardMarkup(
+        keyboard=buttons,
+        resize_keyboard=True
+    )
+
+    await message.answer(
+        f"Sahifa: {page + 1}",
+        reply_markup=kb
+    )
+
+
     # shu yerda sen ishlatayotgan
     # barcode + etiketka kodi ishlaydi
+
+
+@dp.message(F.text == "❌ Bekor qilish")
+async def cancel(
+    message: Message,
+    state: FSMContext
+):
+
+    await state.clear()
+
+    await message.answer(
+        "Bosh menyu",
+        reply_markup=menu
+    )
+
+
+
+
+@dp.message(F.text == "➡️ Keyingi")
+async def next_page(
+    message: Message,
+    state: FSMContext
+):
+
+    data = await state.get_data()
+
+    page = data.get("page", 0)
+
+    async with AsyncSessionLocal() as session:
+
+        result = await session.execute(
+            select(Product)
+        )
+
+        products = result.scalars().all()
+
+    page += 1
+
+    await state.update_data(
+        page=page
+    )
+
+    await show_products(
+        message,
+        products,
+        page
+    )
+
+@dp.message(F.text == "⬅️ Oldingi")
+async def prev_page(
+    message: Message,
+    state: FSMContext
+):
+
+    data = await state.get_data()
+
+    page = data.get("page", 0)
+
+    if page > 0:
+        page -= 1
+
+    async with AsyncSessionLocal() as session:
+
+        result = await session.execute(
+            select(Product)
+        )
+
+        products = result.scalars().all()
+
+    await state.update_data(
+        page=page
+    )
+
+    await show_products(
+        message,
+        products,
+        page
+    )
+    
+
+
 
 async def main():
 
