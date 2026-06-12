@@ -419,11 +419,77 @@ async def price_label(
         page=0
     )
 
-@dp.message(ProductSearch.select_product)
-async def select_product(
+
+async def show_products(
     message: Message,
-    state: FSMContext
+    products,
+    page
 ):
+
+    per_page = 10
+
+    start = page * per_page
+    end = start + per_page
+
+    current = products[start:end]
+
+    buttons = []
+
+    for product in current:
+
+        buttons.append(
+            [KeyboardButton(text=product.name)]
+        )
+
+    nav = []
+
+    if page > 0:
+        nav.append(
+            KeyboardButton(text="⬅️ Oldingi")
+        )
+
+    if end < len(products):
+        nav.append(
+            KeyboardButton(text="➡️ Keyingi")
+        )
+    if nav:
+        buttons.append(nav)
+    
+    buttons.append(
+        [
+            KeyboardButton(
+                text="❌ Bekor qilish"
+            )
+        ]
+    )
+    
+    kb = ReplyKeyboardMarkup(
+        keyboard=buttons,
+        resize_keyboard=True
+    )
+
+    await message.answer(
+        f"Sahifa: {page + 1}",
+        reply_markup=kb
+    )
+
+
+    # shu yerda sen ishlatayotgan
+    # barcode + etiketka kodi ishlaydi
+
+
+
+
+@dp.message(
+    ProductSearch.select_product,
+    ~F.text.in_(
+        [
+            "➡️ Keyingi",
+            "⬅️ Oldingi",
+            "❌ Bekor qilish"
+        ]
+    )
+)
 
     async with AsyncSessionLocal() as session:
 
@@ -587,67 +653,6 @@ async def select_product(
         label_file,
         caption=f"{product.name}"
     )
-
-    await state.clear()
-
-
-async def show_products(
-    message: Message,
-    products,
-    page
-):
-
-    per_page = 10
-
-    start = page * per_page
-    end = start + per_page
-
-    current = products[start:end]
-
-    buttons = []
-
-    for product in current:
-
-        buttons.append(
-            [KeyboardButton(text=product.name)]
-        )
-
-    nav = []
-
-    if page > 0:
-        nav.append(
-            KeyboardButton(text="⬅️ Oldingi")
-        )
-
-    if end < len(products):
-        nav.append(
-            KeyboardButton(text="➡️ Keyingi")
-        )
-    
-    if nav:
-        buttons.append(nav)
-
-        buttons.append(
-                [
-                    KeyboardButton(
-                        text="❌ Bekor qilish"
-                    )
-                ]
-            )
-    
-    kb = ReplyKeyboardMarkup(
-        keyboard=buttons,
-        resize_keyboard=True
-    )
-
-    await message.answer(
-        f"Sahifa: {page + 1}",
-        reply_markup=kb
-    )
-
-
-    # shu yerda sen ishlatayotgan
-    # barcode + etiketka kodi ishlaydi
 
 
 @dp.message(F.text == "❌ Bekor qilish")
