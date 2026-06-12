@@ -47,5 +47,24 @@ class Product(Base):
         String(500),
         nullable=True
     )
-
+    
+    size_s: Mapped[int] = mapped_column(
+        Integer,
+        default=0
+    )
+    
+    size_m: Mapped[int] = mapped_column(
+        Integer,
+        default=0
+    )
+    
+    size_l: Mapped[int] = mapped_column(
+        Integer,
+        default=0
+    )
+    
+    size_xl: Mapped[int] = mapped_column(
+        Integer,
+        default=0
+    )
 
