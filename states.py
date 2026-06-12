@@ -17,13 +17,12 @@ class ProductCreate(StatesGroup):
 from aiogram.fsm.state import State
 from aiogram.fsm.state import StatesGroup
 
-
 class ProductCreate(StatesGroup):
-
     image = State()
     name = State()
     purchase_price = State()
     sale_price = State()
+    sizes = State()      # yangi
     quantity = State()
 
 
@@ -40,12 +39,3 @@ class ProductSearch(StatesGroup):
     page = State()
 
 
-from aiogram.fsm.state import State
-from aiogram.fsm.state import StatesGroup
-
-class ProductCreate(StatesGroup):
-    image = State()
-    name = State()
-    purchase_price = State()
-    sale_price = State()
-    quantity = State()
