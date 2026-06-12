@@ -19,7 +19,10 @@ from aiogram.types import (
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.storage.memory import MemoryStorage
 
-from states import ProductCreate
+from states import (
+    ProductCreate,
+    ProductSearch
+)
 from database import AsyncSessionLocal
 from models import Product
 from sqlalchemy import select
