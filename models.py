@@ -4,7 +4,8 @@ from sqlalchemy.orm import mapped_column
 from sqlalchemy import Boolean
 from sqlalchemy import String
 from sqlalchemy import Integer
-
+from datetime import datetime
+from sqlalchemy import DateTime
 
 class Base(DeclarativeBase):
     pass
@@ -76,4 +77,29 @@ class Product(Base):
     size_xxxl: Mapped[int] = mapped_column(
         Integer,
         default=0
+    )
+
+class Expense(Base):
+
+    __tablename__ = "expenses"
+
+    id: Mapped[int] = mapped_column(
+        primary_key=True
+    )
+
+    title: Mapped[str] = mapped_column(
+        String(255)
+    )
+
+    amount: Mapped[int] = mapped_column(
+        Integer
+    )
+
+    payment_type: Mapped[str] = mapped_column(
+        String(50)
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=datetime.utcnow
     )
