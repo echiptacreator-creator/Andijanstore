@@ -1190,6 +1190,46 @@ async def start_sale(
         "📷 Shtrix kod yuboring yoki skaner qiling"
     )
 
+async def read_barcode_from_photo(
+    photo,
+    bot
+):
+
+    file = await bot.get_file(
+        photo.file_id
+    )
+
+    file_data = await bot.download_file(
+        file.file_path
+    )
+
+    image_bytes = file_data.read()
+
+    nparr = np.frombuffer(
+        image_bytes,
+        np.uint8
+    )
+
+    img = cv2.imdecode(
+        nparr,
+        cv2.IMREAD_COLOR
+    )
+
+    detector = cv2.barcode.BarcodeDetector()
+
+    ok, decoded_info, decoded_type, points = (
+        detector.detectAndDecode(img)
+    )
+
+    if not ok:
+        return None
+
+    if not decoded_info:
+        return None
+
+    return decoded_info[0]
+
+
 @dp.message(SaleCreate.barcode)
 async def get_barcode(
     message: Message,
