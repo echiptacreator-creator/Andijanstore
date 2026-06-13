@@ -6,7 +6,8 @@ from sqlalchemy import String
 from sqlalchemy import Integer
 from datetime import datetime
 from sqlalchemy import DateTime
-
+from datetime import datetime
+from sqlalchemy import DateTime
 class Base(DeclarativeBase):
     pass
 
@@ -97,6 +98,49 @@ class Expense(Base):
 
     payment_type: Mapped[str] = mapped_column(
         String(50)
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=datetime.utcnow
+    )
+
+class Sale(Base):
+
+    __tablename__ = "sales"
+
+    id: Mapped[int] = mapped_column(
+        primary_key=True
+    )
+
+    product_id: Mapped[int] = mapped_column(
+        Integer
+    )
+
+    size: Mapped[str] = mapped_column(
+        String(20)
+    )
+
+    quantity: Mapped[int] = mapped_column(
+        Integer
+    )
+
+    payment_type: Mapped[str] = mapped_column(
+        String(50)
+    )
+
+    bag_price: Mapped[int] = mapped_column(
+        Integer,
+        default=0
+    )
+
+    gift_price: Mapped[int] = mapped_column(
+        Integer,
+        default=0
+    )
+
+    total_price: Mapped[int] = mapped_column(
+        Integer
     )
 
     created_at: Mapped[datetime] = mapped_column(
