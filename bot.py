@@ -960,7 +960,6 @@ async def publish_products(message: Message):
         result = await session.execute(
             select(Product)
             )
-        )
 
         products = result.scalars().all()
 
