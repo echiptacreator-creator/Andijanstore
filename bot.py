@@ -1254,26 +1254,27 @@ async def read_sku_from_photo(
         nparr,
         cv2.IMREAD_COLOR
     )
-
+    
     texts = reader.readtext(
         img,
         detail=0
     )
-
+    
+    print("OCR TEXTS =", texts)
+    
     text = " ".join(texts)
-
-    print("OCR:", text)
-
+    
+    print("OCR TEXT =", text)
+    
     match = re.search(
         r'AFK\d+',
         text.upper()
     )
-
+    
     if match:
         return match.group()
-
+    
     return None
-
 @dp.message(SaleCreate.barcode)
 async def get_barcode(
     message: Message,
