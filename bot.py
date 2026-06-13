@@ -8,6 +8,9 @@ from database import (
     engine
 )
 
+from models import Expense
+from states import ExpenseCreate
+
 from aiogram import Bot
 from aiogram import Dispatcher
 from aiogram import F
@@ -62,6 +65,11 @@ menu = ReplyKeyboardMarkup(
         [
             KeyboardButton(
                 text="📢 Mahsulotlarni chiqarish"
+            )
+        ],
+        [
+            KeyboardButton(
+                text="💸 Harajat"
             )
         ]
     ],
@@ -993,6 +1001,112 @@ a
 
     await message.answer(
         f"✅ {count} ta mahsulot guruhga chiqarildi"
+    )
+
+@dp.message(F.text == "💸 Harajat")
+async def expense_start(
+    message: Message,
+    state: FSMContext
+):
+
+    await state.set_state(
+        ExpenseCreate.title
+    )
+
+    await message.answer(
+        "Harajat maqsadini kiriting"
+    )
+
+@dp.message(ExpenseCreate.title)
+async def expense_title(
+    message: Message,
+    state: FSMContext
+):
+
+    await state.update_data(
+        title=message.text
+    )
+
+    await state.set_state(
+        ExpenseCreate.amount
+    )
+
+    await message.answer(
+        "Summani kiriting"
+    )
+
+@dp.message(ExpenseCreate.amount)
+async def expense_amount(
+    message: Message,
+    state: FSMContext
+):
+
+    if not message.text.isdigit():
+
+        await message.answer(
+            "Faqat raqam kiriting"
+        )
+
+        return
+
+    await state.update_data(
+        amount=int(message.text)
+    )
+
+    kb = ReplyKeyboardMarkup(
+        keyboard=[
+            [
+                KeyboardButton(
+                    text="💵 Naqd"
+                ),
+                KeyboardButton(
+                    text="💳 Karta"
+                )
+            ]
+        ],
+        resize_keyboard=True
+    )
+
+    await state.set_state(
+        ExpenseCreate.payment_type
+    )
+
+    await message.answer(
+        "To'lov turini tanlang",
+        reply_markup=kb
+    )
+
+@dp.message(ExpenseCreate.payment_type)
+async def expense_save(
+    message: Message,
+    state: FSMContext
+):
+
+    data = await state.get_data()
+
+    async with AsyncSessionLocal() as session:
+
+        expense = Expense(
+            title=data["title"],
+            amount=data["amount"],
+            payment_type=message.text
+        )
+
+        session.add(expense)
+
+        await session.commit()
+
+    await state.clear()
+
+    await message.answer(
+        f"""
+✅ Harajat saqlandi
+
+📌 {data['title']}
+💰 {data['amount']:,} so'm
+{message.text}
+        """,
+        reply_markup=menu
     )
 
 
