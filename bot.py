@@ -40,7 +40,7 @@ from io import BytesIO
 from aiogram.types import BufferedInputFile
 
 TOKEN = os.getenv("BOT_TOKEN")
-
+GROUP_ID = -5288325150
 bot = Bot(TOKEN)
 
 dp = Dispatcher(
@@ -57,6 +57,11 @@ menu = ReplyKeyboardMarkup(
         [
             KeyboardButton(
                 text="🧾 Narx chek chiqarish"
+            )
+        ],
+        [
+            KeyboardButton(
+                text="📢 Mahsulotlarni chiqarish"
             )
         ]
     ],
@@ -361,7 +366,27 @@ async def save_product(
         session.add(product)
 
         await session.commit()
+#============================================================
+        caption = f"""
+        🏷 {data['name']}
+        
+        💰 Narx: {data['sale_price']:,} so'm
+        
+        📦 Mavjud: {data['quantity']} dona
+        """
+        
+        await bot.send_photo(
+            chat_id=GROUP_ID,
+            photo=data["image_file_id"],
+            caption=caption
+        )
+        
+        product.is_posted = True
 
+#============================================================
+        
+        await session.commit()
+    
     code128 = barcode.get(
         "code128",
         sku,
@@ -924,6 +949,47 @@ async def prev_page(
         page
     )
     
+
+@dp.message(F.text == "📢 Mahsulotlarni chiqarish")
+async def publish_products(message: Message):
+
+    count = 0
+
+    async with AsyncSessionLocal() as session:
+
+        result = await session.execute(
+            select(Product).where(
+                Product.is_posted == False
+            )
+        )
+
+        products = result.scalars().all()
+
+        for product in products:
+
+            caption = f"""
+🏷 {product.name}
+
+💰 Narx: {product.sale_price:,} so'm
+
+📦 Mavjud: {product.quantity} dona
+"""
+
+            await bot.send_photo(
+                chat_id=GROUP_ID,
+                photo=product.image_file_id,
+                caption=caption
+            )
+
+            product.is_posted = True
+
+            count += 1
+
+        await session.commit()
+
+    await message.answer(
+        f"✅ {count} ta mahsulot guruhga chiqarildi"
+    )
 
 
 
