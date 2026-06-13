@@ -77,8 +77,6 @@ class Product(Base):
         Integer,
         default=0
     )
-
-from sqlalchemy import Boolean
     
     is_posted: Mapped[bool] = mapped_column(
         Boolean,
