@@ -1259,9 +1259,8 @@ async def read_sku_from_photo(
         img,
         detail=0
     )
-    await bot.send_message(
-        YOUR_ADMIN_ID,
-        f"OCR RESULT:\n{texts}"
+    await message.answer(
+        f"OCR: {texts}"
     )
     print("OCR TEXTS =", texts)
     
