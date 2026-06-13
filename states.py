@@ -20,3 +20,9 @@ class ProductCreate(StatesGroup):
 class ProductSearch(StatesGroup):
     select_product = State()
     page = State()
+
+class ExpenseCreate(StatesGroup):
+
+    title = State()
+    amount = State()
+    payment_type = State()
