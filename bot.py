@@ -1191,15 +1191,36 @@ async def get_barcode(
     state: FSMContext
 ):
 
-    if not message.text:
+    sku = None
 
-        await message.answer(
-            "❌ Hozircha SKU kod yuboring.\nMasalan: AFK000001"
+    # Skaner yuborgan matn
+    if message.text:
+        sku = message.text.strip()
+
+    # Barcode rasmi
+    elif message.photo:
+
+        file = await bot.get_file(
+            message.photo[-1].file_id
         )
 
-        return
+        file_bytes = await bot.download_file(
+            file.file_path
+        )
 
-    sku = message.text.strip()
+        image = Image.open(file_bytes)
+
+        decoded = decode(image)
+
+        if decoded:
+            sku = decoded[0].data.decode("utf-8")
+
+    if not sku:
+
+        await message.answer(
+            "❌ Barcode o'qilmadi"
+        )
+        return
 
     async with AsyncSessionLocal() as session:
 
@@ -1214,10 +1235,27 @@ async def get_barcode(
     if not product:
 
         await message.answer(
-            "❌ Mahsulot topilmadi"
+            f"❌ Mahsulot topilmadi\nSKU: {sku}"
         )
-
         return
+
+    await state.update_data(
+        product_id=product.id
+    )
+
+    await message.answer(
+        f"""
+📦 {product.name}
+
+💰 {product.sale_price:,} so'm
+
+Razmer tanlang
+"""
+    )
+
+    await state.set_state(
+        SaleCreate.size
+    )
 
     await state.update_data(
         product_id=product.id
