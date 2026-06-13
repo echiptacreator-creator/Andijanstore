@@ -1311,6 +1311,219 @@ Razmer tanlang
 """,
         reply_markup=kb
     )
+@dp.callback_query(
+    SaleCreate.size,
+    F.data.startswith("size_")
+)
+async def select_size(
+    callback: CallbackQuery,
+    state: FSMContext
+):
+
+    size = callback.data.replace(
+        "size_",
+        ""
+    )
+
+    await state.update_data(
+        size=size
+    )
+
+    await state.set_state(
+        SaleCreate.quantity
+    )
+
+    await callback.message.answer(
+        "Nechta sotildi?"
+    )
+
+    await callback.answer()
+
+@dp.message(SaleCreate.quantity)
+async def sale_quantity(
+    message: Message,
+    state: FSMContext
+):
+
+    if not message.text.isdigit():
+
+        await message.answer(
+            "Faqat son kiriting"
+        )
+        return
+
+    await state.update_data(
+        quantity=int(message.text)
+    )
+
+    kb = ReplyKeyboardMarkup(
+        keyboard=[
+            [
+                KeyboardButton(text="💵 Naqd"),
+                KeyboardButton(text="💳 Karta")
+            ]
+        ],
+        resize_keyboard=True
+    )
+
+    await state.set_state(
+        SaleCreate.payment
+    )
+
+    await message.answer(
+        "To'lov turi?",
+        reply_markup=kb
+    )
+
+@dp.message(SaleCreate.payment)
+async def sale_payment(
+    message: Message,
+    state: FSMContext
+):
+
+    await state.update_data(
+        payment=message.text
+    )
+
+    kb = ReplyKeyboardMarkup(
+        keyboard=[
+            [KeyboardButton(text="🛍 Paket")],
+            [KeyboardButton(text="🎁 Sovg'a qutisi")],
+            [KeyboardButton(text="➡️ Davom etish")]
+        ],
+        resize_keyboard=True
+    )
+
+    await state.update_data(
+        bag_price=0,
+        gift_price=0
+    )
+
+    await state.set_state(
+        SaleCreate.extras
+    )
+
+    await message.answer(
+        "Qo'shimcha xizmat tanlang",
+        reply_markup=kb
+    )
+
+@dp.message(SaleCreate.extras)
+async def sale_extras(
+    message: Message,
+    state: FSMContext
+):
+
+    data = await state.get_data()
+
+    if message.text == "🛍 Paket":
+
+        await state.update_data(
+            bag_price=5000
+        )
+
+        await message.answer(
+            "✅ Paket qo'shildi"
+        )
+
+        return
+
+    if message.text == "🎁 Sovg'a qutisi":
+
+        await state.update_data(
+            gift_price=15000
+        )
+
+        await message.answer(
+            "✅ Sovg'a qutisi qo'shildi"
+        )
+
+        return
+
+    if message.text != "➡️ Davom etish":
+        return
+
+    data = await state.get_data()
+
+    async with AsyncSessionLocal() as session:
+
+        product = await session.get(
+            Product,
+            data["product_id"]
+        )
+
+        total = (
+            product.sale_price *
+            data["quantity"]
+        )
+
+        total += data.get(
+            "bag_price",
+            0
+        )
+
+        total += data.get(
+            "gift_price",
+            0
+        )
+
+        sale = Sale(
+            product_id=product.id,
+            size=data["size"],
+            quantity=data["quantity"],
+            payment_type=data["payment"],
+            bag_price=data.get(
+                "bag_price",
+                0
+            ),
+            gift_price=data.get(
+                "gift_price",
+                0
+            ),
+            total_price=total
+        )
+
+        session.add(sale)
+
+        qty = data["quantity"]
+
+        if data["size"] == "S":
+            product.size_s -= qty
+
+        elif data["size"] == "M":
+            product.size_m -= qty
+
+        elif data["size"] == "L":
+            product.size_l -= qty
+
+        elif data["size"] == "XL":
+            product.size_xl -= qty
+
+        elif data["size"] == "XXL":
+            product.size_xxl -= qty
+
+        elif data["size"] == "XXXL":
+            product.size_xxxl -= qty
+
+        product.quantity -= qty
+
+        await session.commit()
+
+    await message.answer(
+        f"""
+✅ Sotuv saqlandi
+
+📦 {product.name}
+📏 {data['size']}
+🔢 {qty}
+
+💰 {total:,} so'm
+{data['payment']}
+""",
+        reply_markup=menu
+    )
+
+    await state.clear()
 
 
 
