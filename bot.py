@@ -17,7 +17,8 @@ from sqlalchemy import func
 from aiogram import Bot
 from aiogram import Dispatcher
 from aiogram import F
-
+from pyzbar.pyzbar import decode
+from PIL import Image
 from aiogram.filters import CommandStart
 
 from aiogram.types import (
