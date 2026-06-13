@@ -19,7 +19,7 @@ async def create_tables():
         """))
 
         await conn.execute(text("""
-            ALTER TABLE products
-            ADD COLUMN IF NOT EXISTS is_posted BOOLEAN DEFAULT FALSE
+        ALTER TABLE products
+        ADD COLUMN IF NOT EXISTS is_posted BOOLEAN DEFAULT FALSE
         """))
         
