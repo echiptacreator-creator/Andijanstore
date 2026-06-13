@@ -8,7 +8,8 @@ from database import (
     engine
 )
 from models import Sale
-
+import cv2
+import numpy as np
 from states import SaleCreate
 from models import Expense
 from states import ExpenseCreate
