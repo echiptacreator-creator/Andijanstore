@@ -10,6 +10,7 @@ from database import (
 from models import Sale
 import cv2
 import numpy as np
+from PIL import Image
 from states import SaleCreate
 from models import Expense
 from states import ExpenseCreate
@@ -18,10 +19,13 @@ from sqlalchemy import func
 from aiogram import Bot
 from aiogram import Dispatcher
 from aiogram import F
-from pyzbar.pyzbar import decode
 from PIL import Image
 from aiogram.filters import CommandStart
-
+from aiogram.types import (
+    InlineKeyboardMarkup,
+    InlineKeyboardButton,
+    CallbackQuery
+)
 from aiogram.types import (
     Message,
     ReplyKeyboardMarkup,
@@ -1194,27 +1198,18 @@ async def get_barcode(
 
     sku = None
 
-    # Skaner yuborgan matn
+    # 1. Skaner yuborgan matn
     if message.text:
+
         sku = message.text.strip()
 
-    # Barcode rasmi
+    # 2. Barcode rasmi
     elif message.photo:
 
-        file = await bot.get_file(
-            message.photo[-1].file_id
+        sku = await read_barcode_from_photo(
+            message.photo[-1],
+            bot
         )
-
-        file_bytes = await bot.download_file(
-            file.file_path
-        )
-
-        image = Image.open(file_bytes)
-
-        decoded = decode(image)
-
-        if decoded:
-            sku = decoded[0].data.decode("utf-8")
 
     if not sku:
 
@@ -1236,7 +1231,7 @@ async def get_barcode(
     if not product:
 
         await message.answer(
-            f"❌ Mahsulot topilmadi\nSKU: {sku}"
+            f"❌ Mahsulot topilmadi\n{sku}"
         )
         return
 
@@ -1257,7 +1252,6 @@ Razmer tanlang
     await state.set_state(
         SaleCreate.size
     )
-
     await state.update_data(
         product_id=product.id
     )
