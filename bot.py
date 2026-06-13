@@ -958,8 +958,7 @@ async def publish_products(message: Message):
     async with AsyncSessionLocal() as session:
 
         result = await session.execute(
-            select(Product).where(
-                Product.is_posted == False
+            select(Product)
             )
         )
 
