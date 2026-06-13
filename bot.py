@@ -380,8 +380,7 @@ async def save_product(
             photo=data["image_file_id"],
             caption=caption
         )
-        
-        product.is_posted = True
+       
 
 #============================================================
         
@@ -979,7 +978,6 @@ async def publish_products(message: Message):
                 caption=caption
             )
 
-            product.is_posted = True
 
             count += 1
 
