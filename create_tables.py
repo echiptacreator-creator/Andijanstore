@@ -1,11 +1,6 @@
-import asyncio
-
-from database import engine
-from models import Base
-from sqlalchemy import text
 from sqlalchemy import text
 
-async def create():
+async def create_tables():
 
     async with engine.begin() as conn:
 
@@ -22,13 +17,9 @@ async def create():
             ALTER TABLE products
             ADD COLUMN IF NOT EXISTS size_xxxl INTEGER DEFAULT 0
         """))
-        
+
         await conn.execute(text("""
-        ALTER TABLE products
-        ADD COLUMN IF NOT EXISTS is_posted BOOLEAN DEFAULT FALSE
+            ALTER TABLE products
+            ADD COLUMN IF NOT EXISTS is_posted BOOLEAN DEFAULT FALSE
         """))
-
-        print("XXL va XXXL qo'shildi")
-
-
-asyncio.run(create())
+        
