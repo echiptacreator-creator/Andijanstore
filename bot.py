@@ -1217,9 +1217,9 @@ async def read_barcode_from_photo(
 
     detector = cv2.barcode.BarcodeDetector()
 
-    ok, decoded_info, decoded_type, points = (
-        detector.detectAndDecode(img)
-    )
+    result = detector.detectAndDecode(img)
+    
+    print(result)
 
     if not ok:
         return None
