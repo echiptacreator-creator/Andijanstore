@@ -1,7 +1,7 @@
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column
-
+from sqlalchemy import Boolean
 from sqlalchemy import String
 from sqlalchemy import Integer
 
@@ -76,4 +76,9 @@ class Product(Base):
     size_xxxl: Mapped[int] = mapped_column(
         Integer,
         default=0
+    )
+    
+    is_posted: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False
     )
