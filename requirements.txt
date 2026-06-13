@@ -4,3 +4,5 @@ asyncpg==0.30.0
 python-barcode
 Pillow
 pyzbar
+opencv-python-headless
+numpy
