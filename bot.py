@@ -10,7 +10,8 @@ from database import (
 
 from models import Expense
 from states import ExpenseCreate
-
+from datetime import datetime
+from sqlalchemy import func
 from aiogram import Bot
 from aiogram import Dispatcher
 from aiogram import F
@@ -71,7 +72,14 @@ menu = ReplyKeyboardMarkup(
             KeyboardButton(
                 text="💸 Harajat"
             )
+        ],
+
+        [
+            KeyboardButton(
+                text="📊 Hisobot"
+            )
         ]
+            
     ],
     resize_keyboard=True
 )
@@ -1109,6 +1117,47 @@ async def expense_save(
         reply_markup=menu
     )
 
+
+@dp.message(F.text == "📊 Hisobot")
+async def report(
+    message: Message
+):
+
+    today = datetime.now().date()
+
+    async with AsyncSessionLocal() as session:
+
+        result = await session.execute(
+            select(Expense).where(
+                func.date(
+                    Expense.created_at
+                ) == today
+            )
+        )
+
+        expenses = result.scalars().all()
+
+    total = sum(
+        x.amount
+        for x in expenses
+    )
+
+    text = f"""
+📊 Bugungi hisobot
+
+💸 Jami harajat:
+{total:,} so'm
+
+"""
+
+    for item in expenses:
+
+        text += (
+            f"\n• {item.title}"
+            f" - {item.amount:,}"
+        )
+
+    await message.answer(text)
 
 
 async def main():
