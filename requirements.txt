@@ -3,3 +3,4 @@ sqlalchemy==2.0.41
 asyncpg==0.30.0
 python-barcode
 Pillow
+pyzbar
