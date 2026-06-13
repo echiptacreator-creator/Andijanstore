@@ -965,11 +965,19 @@ async def publish_products(message: Message):
         for product in products:
 
             caption = f"""
-🏷 {product.name}
+⚽ {product.name}
 
-💰 Narx: {product.sale_price:,} so'm
+💰 {product.sale_price:,} so'm
 
-📦 Mavjud: {product.quantity} dona
+📏 Razmerlar: S • M • L • XL • XXL • XXXL
+
+🚚 Yetkazib berish mavjud
+
+🛒 Onlayn xarid:
+Echipta ilovasi orqali
+
+⚠️ Mahsulot soni cheklangan
+a
 """
 
             await bot.send_photo(
