@@ -7,7 +7,9 @@ from database import (
     AsyncSessionLocal,
     engine
 )
+from models import Sale
 
+from states import SaleCreate
 from models import Expense
 from states import ExpenseCreate
 from datetime import datetime
@@ -53,6 +55,11 @@ dp = Dispatcher(
 
 menu = ReplyKeyboardMarkup(
     keyboard=[
+        [
+            KeyboardButton(
+                text="🛒 Sotuv"
+            )
+        ],
         [
             KeyboardButton(
                 text="➕ Mahsulot qo'shish"
@@ -1158,6 +1165,116 @@ async def report(
         )
 
     await message.answer(text)
+
+
+
+@dp.message(F.text == "🛒 Sotuv")
+async def start_sale(
+    message: Message,
+    state: FSMContext
+):
+
+    await state.clear()
+
+    await state.set_state(
+        SaleCreate.barcode
+    )
+
+    await message.answer(
+        "📷 Shtrix kod yuboring yoki skaner qiling"
+    )
+
+@dp.message(SaleCreate.barcode)
+async def get_barcode(
+    message: Message,
+    state: FSMContext
+):
+
+    sku = message.text.strip()
+
+    async with AsyncSessionLocal() as session:
+
+        result = await session.execute(
+            select(Product).where(
+                Product.sku == sku
+            )
+        )
+
+        product = result.scalar_one_or_none()
+
+    if not product:
+
+        await message.answer(
+            "❌ Mahsulot topilmadi"
+        )
+        return
+
+    await state.update_data(
+        product_id=product.id
+    )
+
+    kb = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text=f"S ({product.size_s})",
+                    callback_data="size_S"
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    text=f"M ({product.size_m})",
+                    callback_data="size_M"
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    text=f"L ({product.size_l})",
+                    callback_data="size_L"
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    text=f"XL ({product.size_xl})",
+                    callback_data="size_XL"
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    text=f"XXL ({product.size_xxl})",
+                    callback_data="size_XXL"
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    text=f"XXXL ({product.size_xxxl})",
+                    callback_data="size_XXXL"
+                )
+            ]
+        ]
+    )
+
+    await state.set_state(
+        SaleCreate.size
+    )
+
+    await message.answer(
+        f"""
+📦 {product.name}
+
+💰 {product.sale_price:,} so'm
+
+Razmer tanlang
+""",
+        reply_markup=kb
+    )
+
+
+
+
+
+
+
 
 
 async def main():
