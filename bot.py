@@ -7,9 +7,11 @@ from database import (
     AsyncSessionLocal,
     engine
 )
-from models import Sale
+import easyocr
+import re
 import cv2
 import numpy as np
+from models import Sale
 from PIL import Image
 from states import SaleCreate
 from models import Expense
@@ -105,6 +107,11 @@ async def start(message: Message):
         "Andijon Store",
         reply_markup=menu
     )
+
+reader = easyocr.Reader(
+    ['en'],
+    gpu=False
+)
 
 
 @dp.message(F.text == "➕ Mahsulot qo'shish")
@@ -1223,6 +1230,50 @@ async def read_barcode_from_photo(
 
     return None
 
+async def read_sku_from_photo(
+    photo,
+    bot
+):
+
+    file = await bot.get_file(
+        photo.file_id
+    )
+
+    file_data = await bot.download_file(
+        file.file_path
+    )
+
+    image_bytes = file_data.read()
+
+    nparr = np.frombuffer(
+        image_bytes,
+        np.uint8
+    )
+
+    img = cv2.imdecode(
+        nparr,
+        cv2.IMREAD_COLOR
+    )
+
+    texts = reader.readtext(
+        img,
+        detail=0
+    )
+
+    text = " ".join(texts)
+
+    print("OCR:", text)
+
+    match = re.search(
+        r'AFK\d+',
+        text.upper()
+    )
+
+    if match:
+        return match.group()
+
+    return None
+
 @dp.message(SaleCreate.barcode)
 async def get_barcode(
     message: Message,
@@ -1231,15 +1282,15 @@ async def get_barcode(
 
     sku = None
 
-    # 1. Skaner yuborgan matn
+    # Skaner
     if message.text:
 
-        sku = message.text.strip()
+        sku = message.text.strip().upper()
 
-    # 2. Barcode rasmi
+    # Rasm
     elif message.photo:
 
-        sku = await read_barcode_from_photo(
+        sku = await read_sku_from_photo(
             message.photo[-1],
             bot
         )
@@ -1247,7 +1298,7 @@ async def get_barcode(
     if not sku:
 
         await message.answer(
-            "❌ Barcode o'qilmadi"
+            "❌ SKU topilmadi"
         )
         return
 
@@ -1264,7 +1315,7 @@ async def get_barcode(
     if not product:
 
         await message.answer(
-            f"❌ Mahsulot topilmadi\n{sku}"
+            f"❌ Mahsulot topilmadi\n\n{sku}"
         )
         return
 
@@ -1272,68 +1323,87 @@ async def get_barcode(
         product_id=product.id
     )
 
-    await message.answer(
-        f"""
-📦 {product.name}
+    buttons = []
 
-💰 {product.sale_price:,} so'm
-
-Razmer tanlang
-"""
-    )
-
-    await state.set_state(
-        SaleCreate.size
-    )
-    await state.update_data(
-        product_id=product.id
-    )
-
-    kb = InlineKeyboardMarkup(
-        inline_keyboard=[
+    if product.size_s > 0:
+        buttons.append(
             [
                 InlineKeyboardButton(
                     text=f"S ({product.size_s})",
                     callback_data="size_S"
                 )
-            ],
+            ]
+        )
+
+    if product.size_m > 0:
+        buttons.append(
             [
                 InlineKeyboardButton(
                     text=f"M ({product.size_m})",
                     callback_data="size_M"
                 )
-            ],
+            ]
+        )
+
+    if product.size_l > 0:
+        buttons.append(
             [
                 InlineKeyboardButton(
                     text=f"L ({product.size_l})",
                     callback_data="size_L"
                 )
-            ],
+            ]
+        )
+
+    if product.size_xl > 0:
+        buttons.append(
             [
                 InlineKeyboardButton(
                     text=f"XL ({product.size_xl})",
                     callback_data="size_XL"
                 )
-            ],
+            ]
+        )
+
+    if product.size_xxl > 0:
+        buttons.append(
             [
                 InlineKeyboardButton(
                     text=f"XXL ({product.size_xxl})",
                     callback_data="size_XXL"
                 )
-            ],
+            ]
+        )
+
+    if product.size_xxxl > 0:
+        buttons.append(
             [
                 InlineKeyboardButton(
                     text=f"XXXL ({product.size_xxxl})",
                     callback_data="size_XXXL"
                 )
             ]
-        ]
+        )
+
+    kb = InlineKeyboardMarkup(
+        inline_keyboard=buttons
+    )
+
+    await message.answer_photo(
+        product.image_file_id,
+        caption=f"""
+📦 {product.name}
+
+💰 {product.sale_price:,} so'm
+
+Razmer tanlang:
+""",
+        reply_markup=kb
     )
 
     await state.set_state(
         SaleCreate.size
     )
-
     await message.answer(
         f"""
 📦 {product.name}
