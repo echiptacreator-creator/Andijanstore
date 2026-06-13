@@ -1190,6 +1190,14 @@ async def get_barcode(
     state: FSMContext
 ):
 
+    if not message.text:
+
+        await message.answer(
+            "❌ Hozircha SKU kod yuboring.\nMasalan: AFK000001"
+        )
+
+        return
+
     sku = message.text.strip()
 
     async with AsyncSessionLocal() as session:
@@ -1207,6 +1215,7 @@ async def get_barcode(
         await message.answer(
             "❌ Mahsulot topilmadi"
         )
+
         return
 
     await state.update_data(
