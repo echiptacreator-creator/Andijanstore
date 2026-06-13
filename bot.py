@@ -1218,17 +1218,10 @@ async def read_barcode_from_photo(
     detector = cv2.barcode.BarcodeDetector()
 
     result = detector.detectAndDecode(img)
-    
-    print(result)
 
-    if not ok:
-        return None
+    print("BARCODE RESULT:", result)
 
-    if not decoded_info:
-        return None
-
-    return decoded_info[0]
-
+    return None
 
 @dp.message(SaleCreate.barcode)
 async def get_barcode(
