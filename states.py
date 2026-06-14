@@ -31,20 +31,6 @@ class ExpenseCreate(StatesGroup):
     amount = State()
     payment_type = State()
 
-class SaleCreate(StatesGroup):
-
-    barcode = State()
-
-    size = State()
-
-    quantity = State()
-
-    payment = State()
-
-    extras = State()
-
-    confirm = State()
-
 
 class SaleCreate(StatesGroup):
 
