@@ -1440,169 +1440,76 @@ To'lov turini tanlang
         reply_markup=kb
     )
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-@dp.message(SaleCreate.payment)
-async def sale_payment(
-    message: Message,
-    state: FSMContext
-):
-
-    await state.update_data(
-        payment=message.text
-    )
-
-    kb = ReplyKeyboardMarkup(
-        keyboard=[
-            [KeyboardButton(text="🛍 Paket")],
-            [KeyboardButton(text="🎁 Sovg'a qutisi")],
-            [KeyboardButton(text="➡️ Davom etish")]
-        ],
-        resize_keyboard=True
-    )
-
-    await state.update_data(
-        bag_price=0,
-        gift_price=0
-    )
-
-    await state.set_state(
-        SaleCreate.extras
-    )
-
-    await message.answer(
-        "Qo'shimcha xizmat tanlang",
-        reply_markup=kb
-    )
-
-@dp.message(SaleCreate.extras)
-async def sale_extras(
+@dp.message(
+    SaleCreate.payment,
+    F.text == "💵 Naqd"
+)
+async def cash_payment(
     message: Message,
     state: FSMContext
 ):
 
     data = await state.get_data()
 
-    if message.text == "🛍 Paket":
-
-        await state.update_data(
-            bag_price=5000
-        )
-
-        await message.answer(
-            "✅ Paket qo'shildi"
-        )
-
-        return
-
-    if message.text == "🎁 Sovg'a qutisi":
-
-        await state.update_data(
-            gift_price=15000
-        )
-
-        await message.answer(
-            "✅ Sovg'a qutisi qo'shildi"
-        )
-
-        return
-
-    if message.text != "➡️ Davom etish":
-        return
-
-    data = await state.get_data()
+    cart = data["cart"]
 
     async with AsyncSessionLocal() as session:
 
-        product = await session.get(
-            Product,
-            data["product_id"]
-        )
+        for item in cart:
 
-        total = (
-            product.sale_price *
-            data["quantity"]
-        )
+            result = await session.execute(
+                select(Product).where(
+                    Product.id == item["product_id"]
+                )
+            )
 
-        total += data.get(
-            "bag_price",
-            0
-        )
+            product = result.scalar_one()
 
-        total += data.get(
-            "gift_price",
-            0
-        )
+            size = item["size"]
+            qty = item["quantity"]
 
-        sale = Sale(
-            product_id=product.id,
-            size=data["size"],
-            quantity=data["quantity"],
-            payment_type=data["payment"],
-            bag_price=data.get(
-                "bag_price",
-                0
-            ),
-            gift_price=data.get(
-                "gift_price",
-                0
-            ),
-            total_price=total
-        )
+            if size == "S":
+                product.size_s -= qty
 
-        session.add(sale)
+            elif size == "M":
+                product.size_m -= qty
 
-        qty = data["quantity"]
+            elif size == "L":
+                product.size_l -= qty
 
-        if data["size"] == "S":
-            product.size_s -= qty
+            elif size == "XL":
+                product.size_xl -= qty
 
-        elif data["size"] == "M":
-            product.size_m -= qty
+            elif size == "XXL":
+                product.size_xxl -= qty
 
-        elif data["size"] == "L":
-            product.size_l -= qty
+            elif size == "XXXL":
+                product.size_xxxl -= qty
 
-        elif data["size"] == "XL":
-            product.size_xl -= qty
-
-        elif data["size"] == "XXL":
-            product.size_xxl -= qty
-
-        elif data["size"] == "XXXL":
-            product.size_xxxl -= qty
-
-        product.quantity -= qty
+            product.quantity -= qty
 
         await session.commit()
 
+    total = sum(
+        item["price"] * item["quantity"]
+        for item in cart
+    )
+
+    text = "🧾 SOTUV CHEKI\n\n"
+
+    for item in cart:
+
+        text += (
+            f"{item['name']}\n"
+            f"{item['size']} x {item['quantity']}\n"
+            f"{item['price']:,} so'm\n\n"
+        )
+
+    text += f"💰 Jami: {total:,} so'm\n"
+    text += "💵 To'lov: Naqd"
+
     await message.answer(
-        f"""
-✅ Sotuv saqlandi
-
-📦 {product.name}
-📏 {data['size']}
-🔢 {qty}
-
-💰 {total:,} so'm
-{data['payment']}
-""",
+        text,
         reply_markup=menu
     )
 
