@@ -1227,20 +1227,50 @@ async def get_sku(
     await state.update_data(
         product_id=product.id
     )
-
+    
+    buttons = []
+    
+    row1 = []
+    row2 = []
+    
+    if product.size_s > 0:
+        row1.append(
+            KeyboardButton(text="S")
+        )
+    
+    if product.size_m > 0:
+        row1.append(
+            KeyboardButton(text="M")
+        )
+    
+    if product.size_l > 0:
+        row1.append(
+            KeyboardButton(text="L")
+        )
+    
+    if product.size_xl > 0:
+        row2.append(
+            KeyboardButton(text="XL")
+        )
+    
+    if product.size_xxl > 0:
+        row2.append(
+            KeyboardButton(text="XXL")
+        )
+    
+    if product.size_xxxl > 0:
+        row2.append(
+            KeyboardButton(text="XXXL")
+        )
+    
+    if row1:
+        buttons.append(row1)
+    
+    if row2:
+        buttons.append(row2)
+    
     kb = ReplyKeyboardMarkup(
-        keyboard=[
-            [
-                KeyboardButton(text="S"),
-                KeyboardButton(text="M"),
-                KeyboardButton(text="L")
-            ],
-            [
-                KeyboardButton(text="XL"),
-                KeyboardButton(text="XXL"),
-                KeyboardButton(text="XXXL")
-            ]
-        ],
+        keyboard=buttons,
         resize_keyboard=True
     )
 
@@ -1352,7 +1382,7 @@ async def get_sale_quantity(
     await state.set_state(
         SaleCreate.sku
     )
-
+    
     kb = ReplyKeyboardMarkup(
         keyboard=[
             [
@@ -1373,17 +1403,33 @@ async def get_sale_quantity(
         ],
         resize_keyboard=True
     )
-
+    
+    cart_text = ""
+    
+    for i, item in enumerate(cart, start=1):
+    
+        cart_text += (
+            f"{i}) {item['name']} "
+            f"({item['size']}) "
+            f"x{item['quantity']}\n"
+        )
+    
     await message.answer(
         f"""
-✅ Savatga qo'shildi
-
-📦 {product.name}
-📏 {data['size']}
-🔢 {qty} dona
-
-💰 Jami: {total:,} so'm
-""",
+    ✅ Savatga qo'shildi
+    
+    📦 {product.name}
+    📏 {data['size']}
+    🔢 {qty} dona
+    
+    ━━━━━━━━━━
+    
+    🛒 Savat:
+    
+    {cart_text}
+    
+    💰 Jami: {total:,} so'm
+    """,
         reply_markup=kb
     )
 @dp.message(F.text == "➕ Savat mahsulot")
