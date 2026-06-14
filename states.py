@@ -51,4 +51,8 @@ class SaleCreate(StatesGroup):
     sku = State()
     size = State()
     quantity = State()
+
     payment = State()
+    extras = State()
+
+    confirm = State()
