@@ -1189,127 +1189,29 @@ async def start_sale(
 
     await state.clear()
 
+    await state.update_data(
+        cart=[]
+    )
+
     await state.set_state(
-        SaleCreate.barcode
+        SaleCreate.sku
     )
 
     await message.answer(
-        "📷 Shtrix kod yuboring yoki skaner qiling"
+        "📷 SKU ni yuboring yoki skaner qiling"
     )
 
-async def read_barcode_from_photo(
-    photo,
-    bot
-):
-
-    file = await bot.get_file(
-        photo.file_id
-    )
-
-    file_data = await bot.download_file(
-        file.file_path
-    )
-
-    image_bytes = file_data.read()
-
-    nparr = np.frombuffer(
-        image_bytes,
-        np.uint8
-    )
-
-    img = cv2.imdecode(
-        nparr,
-        cv2.IMREAD_COLOR
-    )
-
-    detector = cv2.barcode.BarcodeDetector()
-
-    result = detector.detectAndDecode(img)
-
-    print("BARCODE RESULT:", result)
-
-    return None
-
-async def read_sku_from_photo(
-    photo,
-    bot
-):
-
-    file = await bot.get_file(
-        photo.file_id
-    )
-
-    file_data = await bot.download_file(
-        file.file_path
-    )
-
-    image_bytes = file_data.read()
-
-    nparr = np.frombuffer(
-        image_bytes,
-        np.uint8
-    )
-
-    img = cv2.imdecode(
-        nparr,
-        cv2.IMREAD_COLOR
-    )
-    
-    texts = reader.readtext(
-        img,
-        detail=0
-    )
-    await message.answer(
-        f"OCR: {texts}"
-    )
-    print("OCR TEXTS =", texts)
-    
-    text = " ".join(texts)
-    
-    print("OCR TEXT =", text)
-    
-    match = re.search(
-        r'AFK\d+',
-        text.upper()
-    )
-    
-    if match:
-        return match.group()
-    
-    return None
-@dp.message(SaleCreate.barcode)
-async def get_barcode(
+@dp.message(SaleCreate.sku)
+async def get_sku(
     message: Message,
     state: FSMContext
 ):
-
-    sku = None
-
-    # Skaner
-    if message.text:
-
-        sku = message.text.strip().upper()
-
-    # Rasm
-    elif message.photo:
-
-        sku = await read_sku_from_photo(
-            message.photo[-1],
-            bot
-        )
-
-    if not sku:
-
-        await message.answer(
-            "❌ SKU topilmadi"
-        )
-        return
 
     async with AsyncSessionLocal() as session:
 
         result = await session.execute(
             select(Product).where(
-                Product.sku == sku
+                Product.sku == message.text.upper()
             )
         )
 
@@ -1318,135 +1220,61 @@ async def get_barcode(
     if not product:
 
         await message.answer(
-            f"❌ Mahsulot topilmadi\n\n{sku}"
+            "❌ Mahsulot topilmadi"
         )
+
         return
 
     await state.update_data(
         product_id=product.id
     )
 
-    buttons = []
-
-    if product.size_s > 0:
-        buttons.append(
+    kb = ReplyKeyboardMarkup(
+        keyboard=[
             [
-                InlineKeyboardButton(
-                    text=f"S ({product.size_s})",
-                    callback_data="size_S"
-                )
-            ]
-        )
-
-    if product.size_m > 0:
-        buttons.append(
+                KeyboardButton(text="S"),
+                KeyboardButton(text="M"),
+                KeyboardButton(text="L")
+            ],
             [
-                InlineKeyboardButton(
-                    text=f"M ({product.size_m})",
-                    callback_data="size_M"
-                )
+                KeyboardButton(text="XL"),
+                KeyboardButton(text="XXL"),
+                KeyboardButton(text="XXXL")
             ]
-        )
-
-    if product.size_l > 0:
-        buttons.append(
-            [
-                InlineKeyboardButton(
-                    text=f"L ({product.size_l})",
-                    callback_data="size_L"
-                )
-            ]
-        )
-
-    if product.size_xl > 0:
-        buttons.append(
-            [
-                InlineKeyboardButton(
-                    text=f"XL ({product.size_xl})",
-                    callback_data="size_XL"
-                )
-            ]
-        )
-
-    if product.size_xxl > 0:
-        buttons.append(
-            [
-                InlineKeyboardButton(
-                    text=f"XXL ({product.size_xxl})",
-                    callback_data="size_XXL"
-                )
-            ]
-        )
-
-    if product.size_xxxl > 0:
-        buttons.append(
-            [
-                InlineKeyboardButton(
-                    text=f"XXXL ({product.size_xxxl})",
-                    callback_data="size_XXXL"
-                )
-            ]
-        )
-
-    kb = InlineKeyboardMarkup(
-        inline_keyboard=buttons
-    )
-
-    await message.answer_photo(
-        product.image_file_id,
-        caption=f"""
-📦 {product.name}
-
-💰 {product.sale_price:,} so'm
-
-Razmer tanlang:
-""",
-        reply_markup=kb
+        ],
+        resize_keyboard=True
     )
 
     await state.set_state(
         SaleCreate.size
     )
+
     await message.answer(
-        f"""
-📦 {product.name}
-
-💰 {product.sale_price:,} so'm
-
-Razmer tanlang
-""",
+        f"📏 {product.name}\n\nRazmer tanlang",
         reply_markup=kb
     )
-@dp.callback_query(
-    SaleCreate.size,
-    F.data.startswith("size_")
-)
-async def select_size(
-    callback: CallbackQuery,
+    
+    
+@dp.message(SaleCreate.size)
+async def get_size(
+    message: Message,
     state: FSMContext
 ):
 
-    size = callback.data.replace(
-        "size_",
-        ""
-    )
-
     await state.update_data(
-        size=size
+        size=message.text
     )
 
     await state.set_state(
         SaleCreate.quantity
     )
 
-    await callback.message.answer(
-        "Nechta sotildi?"
+    await message.answer(
+        "Nechta?"
     )
 
-    await callback.answer()
-
 @dp.message(SaleCreate.quantity)
-async def sale_quantity(
+async def get_sale_quantity(
     message: Message,
     state: FSMContext
 ):
@@ -1456,17 +1284,144 @@ async def sale_quantity(
         await message.answer(
             "Faqat son kiriting"
         )
+
         return
 
+    qty = int(message.text)
+
+    data = await state.get_data()
+
+    async with AsyncSessionLocal() as session:
+
+        result = await session.execute(
+            select(Product).where(
+                Product.id == data["product_id"]
+            )
+        )
+
+        product = result.scalar_one()
+
+    cart = data.get("cart", [])
+
+    cart.append(
+        {
+            "product_id": product.id,
+            "name": product.name,
+            "size": data["size"],
+            "quantity": qty,
+            "price": product.sale_price
+        }
+    )
+
     await state.update_data(
-        quantity=int(message.text)
+        cart=cart
+    )
+
+    total = sum(
+        item["price"] * item["quantity"]
+        for item in cart
+    )
+
+    await state.set_state(
+        SaleCreate.sku
+    )
+
+kb = ReplyKeyboardMarkup(
+    keyboard=[
+        [
+            KeyboardButton(
+                text="➕ Mahsulot qo'shish"
+            )
+        ],
+        [
+            KeyboardButton(
+                text="✅ Sotuvni yakunlash"
+            )
+        ],
+        [
+            KeyboardButton(
+                text="❌ Bekor qilish"
+            )
+        ]
+    ],
+    resize_keyboard=True
+)
+
+await message.answer(
+    f"""
+✅ Savatga qo'shildi
+
+📦 {product.name}
+📏 {data['size']}
+🔢 {qty} dona
+
+💰 Jami: {total:,} so'm
+""",
+    reply_markup=kb
+)
+
+
+@dp.message(F.text == "➕ Mahsulot qo'shish")
+async def add_more_product(
+    message: Message,
+    state: FSMContext
+):
+
+    await state.set_state(
+        SaleCreate.sku
+    )
+
+    await message.answer(
+        "📷 SKU ni yuboring"
+    )
+
+@dp.message(F.text == "❌ Bekor qilish")
+async def cancel_sale(
+    message: Message,
+    state: FSMContext
+):
+
+    await state.clear()
+
+    await message.answer(
+        "❌ Sotuv bekor qilindi",
+        reply_markup=menu
+    )
+
+@dp.message(F.text == "✅ Sotuvni yakunlash")
+async def finish_sale(
+    message: Message,
+    state: FSMContext
+):
+
+    data = await state.get_data()
+
+    cart = data.get(
+        "cart",
+        []
+    )
+
+    total = sum(
+        item["price"] * item["quantity"]
+        for item in cart
     )
 
     kb = ReplyKeyboardMarkup(
         keyboard=[
             [
-                KeyboardButton(text="💵 Naqd"),
-                KeyboardButton(text="💳 Karta")
+                KeyboardButton(
+                    text="💵 Naqd"
+                )
+            ],
+            [
+                KeyboardButton(
+                    text="💳 Karta"
+                )
+            ],
+            [
+                KeyboardButton(
+                    text="🔀 Aralash"
+                )
             ]
         ],
         resize_keyboard=True
@@ -1477,9 +1432,31 @@ async def sale_quantity(
     )
 
     await message.answer(
-        "To'lov turi?",
+        f"""
+💰 Jami: {total:,} so'm
+
+To'lov turini tanlang
+""",
         reply_markup=kb
     )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 @dp.message(SaleCreate.payment)
 async def sale_payment(
