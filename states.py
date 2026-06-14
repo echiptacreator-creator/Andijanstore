@@ -1,5 +1,9 @@
 from aiogram.fsm.state import State, StatesGroup
-
+from states import (
+    ProductCreate,
+    ProductSearch,
+    SaleCreate
+)
 
 class ProductCreate(StatesGroup):
     image = State()
@@ -40,3 +44,10 @@ class SaleCreate(StatesGroup):
     extras = State()
 
     confirm = State()
+
+
+class SaleCreate(StatesGroup):
+
+    sku = State()
+    size = State()
+    quantity = State()
