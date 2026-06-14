@@ -1433,7 +1433,7 @@ async def get_sale_quantity(
         reply_markup=kb
     )
 @dp.message(F.text == "➕ Savat mahsulot")
-async def add_more_product(
+async def add_more_products(
     message: Message,
     state: FSMContext
 ):
@@ -1443,7 +1443,7 @@ async def add_more_product(
     )
 
     await message.answer(
-        "📷 SKU ni yuboring"
+        "📦 SKU kiriting yoki skaner qiling"
     )
 
 @dp.message(F.text == "❌ Bekor qilish")
