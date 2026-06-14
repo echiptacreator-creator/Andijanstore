@@ -1615,29 +1615,30 @@ async def confirm_sale(
             product = result.scalar_one()
 
             qty = item["quantity"]
-            size = item["size"]
 
-            if size == "S":
+            if item["size"] == "S":
                 product.size_s -= qty
 
-            elif size == "M":
+            elif item["size"] == "M":
                 product.size_m -= qty
 
-            elif size == "L":
+            elif item["size"] == "L":
                 product.size_l -= qty
 
-            elif size == "XL":
+            elif item["size"] == "XL":
                 product.size_xl -= qty
 
-            elif size == "XXL":
+            elif item["size"] == "XXL":
                 product.size_xxl -= qty
 
-            elif size == "XXXL":
+            elif item["size"] == "XXXL":
                 product.size_xxxl -= qty
 
             product.quantity -= qty
 
         await session.commit()
+
+    await state.clear()
 
     await message.answer(
         f"""
@@ -1647,14 +1648,6 @@ async def confirm_sale(
 """,
         reply_markup=menu
     )
-        sale = Sale(
-            total=data["final_total"],
-            payment_type=data["payment"]
-        )
-        
-        session.add(sale)
-        
-        await state.clear()
 
 
 
