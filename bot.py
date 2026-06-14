@@ -1287,13 +1287,7 @@ async def get_sale_quantity(
         return
 
     qty = int(message.text)
-    
-        await message.answer(
-            f"❌ Omborda faqat {available} dona mavjud"
-        )
-    
-        return
-    
+
     data = await state.get_data()
 
     async with AsyncSessionLocal() as session:
@@ -1306,28 +1300,33 @@ async def get_sale_quantity(
 
         product = result.scalar_one()
 
+    available = 0
 
-        available = 0
-        
-        if data["size"] == "S":
-            available = product.size_s
-        
-        elif data["size"] == "M":
-            available = product.size_m
-        
-        elif data["size"] == "L":
-            available = product.size_l
-        
-        elif data["size"] == "XL":
-            available = product.size_xl
-        
-        elif data["size"] == "XXL":
-            available = product.size_xxl
-        
-        elif data["size"] == "XXXL":
-            available = product.size_xxxl
-        
-        if qty > available:
+    if data["size"] == "S":
+        available = product.size_s
+
+    elif data["size"] == "M":
+        available = product.size_m
+
+    elif data["size"] == "L":
+        available = product.size_l
+
+    elif data["size"] == "XL":
+        available = product.size_xl
+
+    elif data["size"] == "XXL":
+        available = product.size_xxl
+
+    elif data["size"] == "XXXL":
+        available = product.size_xxxl
+
+    if qty > available:
+
+        await message.answer(
+            f"❌ Omborda faqat {available} dona mavjud"
+        )
+
+        return
 
     cart = data.get("cart", [])
 
@@ -1353,7 +1352,7 @@ async def get_sale_quantity(
     await state.set_state(
         SaleCreate.sku
     )
-    
+
     kb = ReplyKeyboardMarkup(
         keyboard=[
             [
@@ -1374,21 +1373,19 @@ async def get_sale_quantity(
         ],
         resize_keyboard=True
     )
-    
+
     await message.answer(
         f"""
-    ✅ Savatga qo'shildi
-    
-    📦 {product.name}
-    📏 {data['size']}
-    🔢 {qty} dona
-    
-    💰 Jami: {total:,} so'm
-    """,
+✅ Savatga qo'shildi
+
+📦 {product.name}
+📏 {data['size']}
+🔢 {qty} dona
+
+💰 Jami: {total:,} so'm
+""",
         reply_markup=kb
     )
-    
-
 @dp.message(F.text == "➕ Savat mahsulot")
 async def add_more_product(
     message: Message,
@@ -1650,14 +1647,14 @@ async def confirm_sale(
 """,
         reply_markup=menu
     )
-    sale = Sale(
-        total=data["final_total"],
-        payment_type=data["payment"]
-    )
-    
-    session.add(sale)
-    
-    await state.clear()
+        sale = Sale(
+            total=data["final_total"],
+            payment_type=data["payment"]
+        )
+        
+        session.add(sale)
+        
+        await state.clear()
 
 
 
