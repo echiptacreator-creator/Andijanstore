@@ -1013,7 +1013,6 @@ async def publish_products(message: Message):
 Echipta ilovasi orqali
 
 ⚠️ Mahsulot soni cheklangan
-a
 """
 
             await bot.send_photo(
@@ -1288,7 +1287,13 @@ async def get_sale_quantity(
         return
 
     qty = int(message.text)
-
+    
+        await message.answer(
+            f"❌ Omborda faqat {available} dona mavjud"
+        )
+    
+        return
+    
     data = await state.get_data()
 
     async with AsyncSessionLocal() as session:
@@ -1300,6 +1305,29 @@ async def get_sale_quantity(
         )
 
         product = result.scalar_one()
+
+
+        available = 0
+        
+        if data["size"] == "S":
+            available = product.size_s
+        
+        elif data["size"] == "M":
+            available = product.size_m
+        
+        elif data["size"] == "L":
+            available = product.size_l
+        
+        elif data["size"] == "XL":
+            available = product.size_xl
+        
+        elif data["size"] == "XXL":
+            available = product.size_xxl
+        
+        elif data["size"] == "XXXL":
+            available = product.size_xxxl
+        
+        if qty > available:
 
     cart = data.get("cart", [])
 
@@ -1325,43 +1353,43 @@ async def get_sale_quantity(
     await state.set_state(
         SaleCreate.sku
     )
-
-kb = ReplyKeyboardMarkup(
-    keyboard=[
-        [
-            KeyboardButton(
-                text="➕ Mahsulot qo'shish"
-            )
+    
+    kb = ReplyKeyboardMarkup(
+        keyboard=[
+            [
+                KeyboardButton(
+                    text="➕ Savat mahsulot"
+                )
+            ],
+            [
+                KeyboardButton(
+                    text="✅ Sotuvni yakunlash"
+                )
+            ],
+            [
+                KeyboardButton(
+                    text="❌ Bekor qilish"
+                )
+            ]
         ],
-        [
-            KeyboardButton(
-                text="✅ Sotuvni yakunlash"
-            )
-        ],
-        [
-            KeyboardButton(
-                text="❌ Bekor qilish"
-            )
-        ]
-    ],
-    resize_keyboard=True
-)
+        resize_keyboard=True
+    )
+    
+    await message.answer(
+        f"""
+    ✅ Savatga qo'shildi
+    
+    📦 {product.name}
+    📏 {data['size']}
+    🔢 {qty} dona
+    
+    💰 Jami: {total:,} so'm
+    """,
+        reply_markup=kb
+    )
+    
 
-await message.answer(
-    f"""
-✅ Savatga qo'shildi
-
-📦 {product.name}
-📏 {data['size']}
-🔢 {qty} dona
-
-💰 Jami: {total:,} so'm
-""",
-    reply_markup=kb
-)
-
-
-@dp.message(F.text == "➕ Mahsulot qo'shish")
+@dp.message(F.text == "➕ Savat mahsulot")
 async def add_more_product(
     message: Message,
     state: FSMContext
@@ -1441,8 +1469,195 @@ To'lov turini tanlang
     )
 
 
+@dp.message(SaleCreate.payment)
+async def sale_payment(
+    message: Message,
+    state: FSMContext
+):
+
+    await state.update_data(
+        payment=message.text
+    )
+
+    kb = ReplyKeyboardMarkup(
+        keyboard=[
+            [
+                KeyboardButton(
+                    text="🎁 Sovg'a paket (+15 000)"
+                )
+            ],
+            [
+                KeyboardButton(
+                    text="➡️ Davom etish"
+                )
+            ]
+        ],
+        resize_keyboard=True
+    )
+
+    await state.update_data(
+        gift_price=0
+    )
+
+    await state.set_state(
+        SaleCreate.extras
+    )
+
+    await message.answer(
+        "🎁 Sovg'a paket kerakmi?",
+        reply_markup=kb
+    )
+
+@dp.message(SaleCreate.extras)
+async def sale_extras(
+    message: Message,
+    state: FSMContext
+):
+
+    if message.text == "🎁 Sovg'a paket (+15 000)":
+
+        await state.update_data(
+            gift_price=15000
+        )
+
+        await message.answer(
+            "✅ Sovg'a paket qo'shildi"
+        )
+
+        return
+
+    if message.text != "➡️ Davom etish":
+        return
+
+    data = await state.get_data()
+
+    cart = data["cart"]
+
+    total = sum(
+        item["price"] * item["quantity"]
+        for item in cart
+    )
+
+    total += data.get(
+        "gift_price",
+        0
+    )
+
+    text = "🧾 Yakuniy chek\n\n"
+
+    for item in cart:
+
+        text += (
+            f"📦 {item['name']}\n"
+            f"📏 {item['size']} x {item['quantity']}\n\n"
+        )
+
+    if data.get("gift_price", 0):
+
+        text += (
+            "🎁 Sovg'a paket\n"
+            "15 000 so'm\n\n"
+        )
+
+    text += f"💰 Jami: {total:,} so'm"
+    text += f"\n💳 To'lov: {data['payment']}"
+
+    kb = ReplyKeyboardMarkup(
+        keyboard=[
+            [
+                KeyboardButton(
+                    text="✅ Tasdiqlash"
+                )
+            ],
+            [
+                KeyboardButton(
+                    text="❌ Bekor qilish"
+                )
+            ]
+        ],
+        resize_keyboard=True
+    )
+
+    await state.update_data(
+        final_total=total
+    )
+
+    await state.set_state(
+        SaleCreate.confirm
+    )
+
+    await message.answer(
+        text,
+        reply_markup=kb
+    )
 
 
+@dp.message(
+    SaleCreate.confirm,
+    F.text == "✅ Tasdiqlash"
+)
+async def confirm_sale(
+    message: Message,
+    state: FSMContext
+):
+
+    data = await state.get_data()
+
+    cart = data["cart"]
+
+    async with AsyncSessionLocal() as session:
+
+        for item in cart:
+
+            result = await session.execute(
+                select(Product).where(
+                    Product.id == item["product_id"]
+                )
+            )
+
+            product = result.scalar_one()
+
+            qty = item["quantity"]
+            size = item["size"]
+
+            if size == "S":
+                product.size_s -= qty
+
+            elif size == "M":
+                product.size_m -= qty
+
+            elif size == "L":
+                product.size_l -= qty
+
+            elif size == "XL":
+                product.size_xl -= qty
+
+            elif size == "XXL":
+                product.size_xxl -= qty
+
+            elif size == "XXXL":
+                product.size_xxxl -= qty
+
+            product.quantity -= qty
+
+        await session.commit()
+
+    await message.answer(
+        f"""
+✅ Sotuv yakunlandi
+
+💰 {data['final_total']:,} so'm
+""",
+        reply_markup=menu
+    )
+    sale = Sale(
+        total=data["final_total"],
+        payment_type=data["payment"]
+    )
+    
+    session.add(sale)
+    
+    await state.clear()
 
 
 
