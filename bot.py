@@ -1200,7 +1200,14 @@ async def start_sale(
         "📷 SKU ni yuboring yoki skaner qiling"
     )
 
-@dp.message(SaleCreate.sku)
+@dp.message(
+    SaleCreate.sku,
+    ~F.text.in_([
+        "➕ Savat mahsulot",
+        "✅ Sotuvni yakunlash",
+        "❌ Bekor qilish"
+    ])
+)
 async def get_sku(
     message: Message,
     state: FSMContext
@@ -1432,7 +1439,10 @@ async def get_sale_quantity(
     """,
         reply_markup=kb
     )
-@dp.message(F.text == "➕ Savat mahsulot")
+@dp.message(
+    SaleCreate.sku,
+    F.text == "➕ Savat mahsulot"
+)
 async def add_more_products(
     message: Message,
     state: FSMContext
@@ -1459,7 +1469,10 @@ async def cancel_sale(
         reply_markup=menu
     )
 
-@dp.message(F.text == "✅ Sotuvni yakunlash")
+@dp.message(
+    SaleCreate.sku,
+    F.text == "✅ Sotuvni yakunlash"
+)
 async def finish_sale(
     message: Message,
     state: FSMContext
