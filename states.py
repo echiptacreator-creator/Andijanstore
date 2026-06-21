@@ -6,12 +6,7 @@ class ProductCreate(StatesGroup):
     purchase_price = State()
     sale_price = State()
 
-    size_s = State()
-    size_m = State()
-    size_l = State()
-    size_xl = State()
-    size_xxl = State()
-    size_xxxl = State()
+    sizes = State()
     
     confirm = State()
 
