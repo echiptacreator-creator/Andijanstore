@@ -207,117 +207,18 @@ async def get_sale(
     )
 
     await state.set_state(
-        ProductCreate.size_s
-    )
-    
-    await message.answer(
-        "📏 S razmer nechta?"
-    )
-
-
-@dp.message(ProductCreate.size_s)
-async def get_s(message: Message, state: FSMContext):
-
-    await state.update_data(
-        s=int(message.text)
-    )
-
-    await state.set_state(
-        ProductCreate.size_m
+        ProductCreate.sizes
     )
 
     await message.answer(
-        "📏 M razmer nechta?"
-    )
-
-
-@dp.message(ProductCreate.size_m)
-async def get_m(message: Message, state: FSMContext):
-
-    await state.update_data(
-        m=int(message.text)
-    )
-
-    await state.set_state(
-        ProductCreate.size_l
-    )
-
-    await message.answer(
-        "📏 L razmer nechta?"
-    )
-
-
-@dp.message(ProductCreate.size_l)
-async def get_l(message: Message, state: FSMContext):
-
-    await state.update_data(
-        l=int(message.text)
-    )
-
-    await state.set_state(
-        ProductCreate.size_xl
-    )
-
-    await message.answer(
-        "📏 XL razmer nechta?"
-    )
-
-@dp.message(ProductCreate.size_xl)
-async def get_xl(message: Message, state: FSMContext):
-
-    await state.update_data(
-        xl=int(message.text)
-    )
-
-    await state.set_state(
-        ProductCreate.size_xxl
-    )
-    
-    await message.answer(
-        "📏 XXL razmer nechta?"
-    )
-
-@dp.message(ProductCreate.size_xxl)
-async def get_xxl(
-    message: Message,
-    state: FSMContext
-):
-
-    await state.update_data(
-        xxl=int(message.text)
-    )
-
-    await state.set_state(
-        ProductCreate.size_xxxl
-    )
-
-    await message.answer(
-        "📏 XXXL razmer nechta?"
-    )
-
-@dp.message(ProductCreate.size_xxxl)
-async def get_xxxl(
-    message: Message,
-    state: FSMContext
-):
-
-    await state.update_data(
-        xxxl=int(message.text)
-    )
-
-    data = await state.get_data()
-
-    total = (
-        data["s"] +
-        data["m"] +
-        data["l"] +
-        data["xl"] +
-        data["xxl"] +
-        data["xxxl"]
-    )
-
-    await state.update_data(
-        quantity=total
+        "Razmerlarni kiriting:\n\n"
+        "S=5\n"
+        "M=10\n"
+        "L=7\n\n"
+        "yoki\n\n"
+        "26=5\n"
+        "28=8\n"
+        "30=10"
     )
 
     kb = ReplyKeyboardMarkup(
@@ -354,6 +255,95 @@ Tasdiqlaysizmi?
     ProductCreate.confirm,
     F.text == "✅ Tasdiqlash"
 )
+
+import json
+
+def parse_sizes(text):
+
+    result = {}
+
+    lines = text.replace(",", "\n").split("\n")
+
+    for line in lines:
+
+        line = line.strip()
+
+        if not line:
+            continue
+
+        if "=" not in line:
+            continue
+
+        size, qty = line.split("=")
+
+        result[size.strip().upper()] = int(
+            qty.strip()
+        )
+
+    return result
+
+@dp.message(ProductCreate.sizes)
+async def get_sizes(
+    message: Message,
+    state: FSMContext
+):
+
+    try:
+
+        sizes = parse_sizes(
+            message.text
+        )
+
+    except:
+
+        await message.answer(
+            "Format noto‘g‘ri.\n\nMisol:\nS=5\nM=10"
+        )
+        return
+
+    total = sum(
+        sizes.values()
+    )
+
+    await state.update_data(
+        sizes=sizes,
+        quantity=total
+    )
+
+    data = await state.get_data()
+
+    sizes_text = "\n".join(
+        f"{k}: {v}"
+        for k, v in sizes.items()
+    )
+
+    kb = ReplyKeyboardMarkup(
+        keyboard=[
+            [KeyboardButton(text="✅ Tasdiqlash")],
+            [KeyboardButton(text="❌ Bekor qilish")]
+        ],
+        resize_keyboard=True
+    )
+
+    await state.set_state(
+        ProductCreate.confirm
+    )
+
+    await message.answer(
+        f"""
+📦 {data['name']}
+
+{sizes_text}
+
+📊 Jami: {total} dona
+
+Tasdiqlaysizmi?
+""",
+        reply_markup=kb
+    )
+
+
+
 async def save_product(
     message: Message,
     state: FSMContext
@@ -361,14 +351,7 @@ async def save_product(
 
     data = await state.get_data()
     
-    total = (
-        data["s"] +
-        data["m"] +
-        data["l"] +
-        data["xl"] +
-        data["xxl"] +
-        data["xxxl"]
-    )
+    total = data["quantity"]
 
     async with AsyncSessionLocal() as session:
 
@@ -391,12 +374,9 @@ async def save_product(
         
             quantity=total,
         
-            size_s=data["s"],
-            size_m=data["m"],
-            size_l=data["l"],
-            size_xl=data["xl"],
-            size_xxl=data["xxl"],
-            size_xxxl=data["xxxl"]
+            sizes=json.dumps(
+                data["sizes"]
+            )
         )
 
         session.add(product)
