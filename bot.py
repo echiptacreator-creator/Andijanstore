@@ -238,13 +238,6 @@ async def get_sale(
         f"""
 📦 {data['name']}
 
-S: {data['s']}
-M: {data['m']}
-L: {data['l']}
-XL: {data['xl']}
-XXL: {data['xxl']}
-XXXL: {data['xxxl']}
-
 📊 Jami: {total} dona
 
 Tasdiqlaysizmi?
