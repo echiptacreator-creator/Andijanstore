@@ -7,6 +7,7 @@ from database import (
     AsyncSessionLocal,
     engine
 )
+import json
 import easyocr
 import re
 import cv2
@@ -256,9 +257,11 @@ Tasdiqlaysizmi?
     F.text == "✅ Tasdiqlash"
 )
 
-import json
 
-def parse_sizes(text):
+async def save_product(
+    message: Message,
+    state: FSMContext
+):
 
     result = {}
 
