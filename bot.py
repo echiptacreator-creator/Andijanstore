@@ -212,43 +212,38 @@ async def get_sale(
     )
 
     await message.answer(
-        "Razmerlarni kiriting:\n\n"
+        "Razmerlarni kiriting.\n\n"
+        "Misol:\n"
         "S=5\n"
-        "M=10\n"
-        "L=7\n\n"
+        "M=8\n"
+        "L=4\n\n"
         "yoki\n\n"
         "26=5\n"
-        "28=8\n"
-        "30=10"
+        "28=10\n"
+        "30=6"
     )
 
-    kb = ReplyKeyboardMarkup(
-        keyboard=[
-            [KeyboardButton(text="✅ Tasdiqlash")],
-            [KeyboardButton(text="❌ Bekor qilish")]
-        ],
-        resize_keyboard=True
-    )
+def parse_sizes(text: str):
 
-    await state.set_state(
-        ProductCreate.confirm
-    )
+    result = {}
 
-    await message.answer(
-        f"""
-📦 {data['name']}
+    lines = text.replace(",", "\n").split("\n")
 
-📊 Jami: {total} dona
+    for line in lines:
 
-Tasdiqlaysizmi?
-""",
-        reply_markup=kb
-    )
-    
-@dp.message(
-    ProductCreate.confirm,
-    F.text == "✅ Tasdiqlash"
-)
+        line = line.strip()
+
+        if not line:
+            continue
+
+        if "=" not in line:
+            continue
+
+        size, qty = line.split("=")
+
+        result[size.strip().upper()] = int(qty.strip())
+
+    return result
 
 
 async def save_product(
@@ -283,23 +278,29 @@ async def get_sizes(
     message: Message,
     state: FSMContext
 ):
-
     try:
-
-        sizes = parse_sizes(
-            message.text
-        )
-
+        sizes = parse_sizes(message.text)
     except:
-
         await message.answer(
-            "Format noto‘g‘ri.\n\nMisol:\nS=5\nM=10"
+            "❌ Format noto'g'ri.\n\n"
+            "Misol:\n"
+            "S=5\n"
+            "M=10\n"
+            "L=7\n\n"
+            "yoki\n"
+            "26=5\n"
+            "28=8\n"
+            "30=10"
         )
         return
 
-    total = sum(
-        sizes.values()
-    )
+    if not sizes:
+        await message.answer(
+            "❌ Hech qanday razmer topilmadi."
+        )
+        return
+
+    total = sum(sizes.values())
 
     await state.update_data(
         sizes=sizes,
@@ -308,10 +309,10 @@ async def get_sizes(
 
     data = await state.get_data()
 
-    sizes_text = "\n".join(
-        f"{k}: {v}"
-        for k, v in sizes.items()
-    )
+    sizes_text = ""
+
+    for size, qty in sizes.items():
+        sizes_text += f"{size} = {qty} ta\n"
 
     kb = ReplyKeyboardMarkup(
         keyboard=[
@@ -321,32 +322,39 @@ async def get_sizes(
         resize_keyboard=True
     )
 
-    await state.set_state(
-        ProductCreate.confirm
-    )
+    await state.set_state(ProductCreate.confirm)
 
     await message.answer(
         f"""
-📦 {data['name']}
+📦 Mahsulot: {data['name']}
+
+📏 Razmerlar:
 
 {sizes_text}
 
-📊 Jami: {total} dona
+📦 Jami: {total} ta
 
 Tasdiqlaysizmi?
 """,
         reply_markup=kb
     )
 
-
-
+@dp.message(
+    ProductCreate.confirm,
+    F.text == "✅ Tasdiqlash"
+)
 async def save_product(
     message: Message,
     state: FSMContext
 ):
 
+
     data = await state.get_data()
-    
+
+    if "sizes" not in data:
+        await message.answer("❌ Razmerlar topilmadi.")
+        return
+        
     total = data["quantity"]
 
     async with AsyncSessionLocal() as session:
@@ -367,31 +375,30 @@ async def save_product(
             image_file_id=data["image_file_id"],
             purchase_price=data["purchase_price"],
             sale_price=data["sale_price"],
-        
-            quantity=total,
-        
-            sizes=json.dumps(
-                data["sizes"]
-            )
+            quantity=data["quantity"],
+            sizes=json.dumps(data["sizes"])
         )
 
         session.add(product)
 
         await session.commit()
 #============================================================
+        sizes_text = "\n".join(
+            f"{k}: {v} ta"
+            for k, v in data["sizes"].items()
+        )
+        
         caption = f"""
         🏷 {data['name']}
         
         💰 Narx: {data['sale_price']:,} so'm
         
-        📦 Mavjud: {data['quantity']} dona
-        """
+        📦 Jami: {data['quantity']} ta
         
-        await bot.send_photo(
-            chat_id=GROUP_ID,
-            photo=data["image_file_id"],
-            caption=caption
-        )
+        📏 Razmerlar:
+        
+        {sizes_text}
+        """
        
 
 #============================================================
