@@ -246,32 +246,6 @@ def parse_sizes(text: str):
     return result
 
 
-async def save_product(
-    message: Message,
-    state: FSMContext
-):
-
-    result = {}
-
-    lines = text.replace(",", "\n").split("\n")
-
-    for line in lines:
-
-        line = line.strip()
-
-        if not line:
-            continue
-
-        if "=" not in line:
-            continue
-
-        size, qty = line.split("=")
-
-        result[size.strip().upper()] = int(
-            qty.strip()
-        )
-
-    return result
 
 @dp.message(ProductCreate.sizes)
 async def get_sizes(
@@ -347,6 +321,8 @@ async def save_product(
     message: Message,
     state: FSMContext
 ):
+
+    
 
 
     data = await state.get_data()
@@ -585,16 +561,6 @@ async def create_tables():
         await conn.run_sync(
             Base.metadata.create_all
         )
-
-        await conn.execute(text("""
-            ALTER TABLE products
-            ADD COLUMN IF NOT EXISTS size_xxl INTEGER DEFAULT 0
-        """))
-
-        await conn.execute(text("""
-            ALTER TABLE products
-            ADD COLUMN IF NOT EXISTS size_xxxl INTEGER DEFAULT 0
-        """))
 
 
 #from models import Base
